@@ -1,0 +1,173 @@
+{
+  "name": "C — Publish (Approve button)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["callback_query"],
+        "additionalFields": {}
+      },
+      "id": "c0000000-0000-0000-0000-000000000001",
+      "name": "Telegram — button tap",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [-700, 320],
+      "credentials": { "telegramApi": { "id": "TELEGRAM_CRED", "name": "Telegram bot" } },
+      "notes": "Fires on the Approve/Reject inline buttons from Workflow B."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.callback_query?.data || '';\nconst [action, id] = data.split(':');\nreturn [{ json: { action, id } }];"
+      },
+      "id": "c0000000-0000-0000-0000-000000000002",
+      "name": "Parse callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-480, 320]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "conditions": { "options": { "version": 2, "caseSensitive": true }, "combinator": "and", "conditions": [ { "leftValue": "={{ $json.action }}", "rightValue": "approve", "operator": { "type": "string", "operation": "equals" } } ] }, "outputKey": "approve" },
+            { "conditions": { "options": { "version": 2, "caseSensitive": true }, "combinator": "and", "conditions": [ { "leftValue": "={{ $json.action }}", "rightValue": "reject", "operator": { "type": "string", "operation": "equals" } } ] }, "outputKey": "reject" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c0000000-0000-0000-0000-000000000003",
+      "name": "Approve or Reject",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [-260, 320]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, type, topic, video_url, thumb_url, seo FROM jobs WHERE id=$1;",
+        "options": { "queryReplacement": "={{ $json.id }}" }
+      },
+      "id": "c0000000-0000-0000-0000-000000000004",
+      "name": "Load job",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-40, 200],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pick the next publish slot. Shorts: 09:00/14:00/19:00 IST; long: 18:00 IST.\nconst job = $json;\nconst seo = (() => { try { return JSON.parse(job.seo); } catch { return {}; } })();\nconst now = new Date();\nconst slotsShort = [9, 14, 19];\nconst slotsLong = [18];\nconst slots = job.type === 'long' ? slotsLong : slotsShort;\n// next slot today (IST ~ UTC+5:30); fall through to first slot tomorrow\nconst istHour = (now.getUTCHours() + 5 + (now.getUTCMinutes() + 30 >= 60 ? 1 : 0)) % 24;\nlet hour = slots.find(h => h > istHour);\nlet addDay = 0;\nif (hour === undefined) { hour = slots[0]; addDay = 1; }\nconst d = new Date(now);\nd.setUTCDate(d.getUTCDate() + addDay);\nd.setUTCHours(hour - 5, -30 + 0, 0, 0); // convert IST slot hour to UTC\nreturn [{ json: { ...job, seo, publishAt: d.toISOString() } }];"
+      },
+      "id": "c0000000-0000-0000-0000-000000000005",
+      "name": "Compute slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [180, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video_url }}",
+        "options": { "response": { "response": { "responseFormat": "file", "outputPropertyName": "video" } } }
+      },
+      "id": "c0000000-0000-0000-0000-000000000006",
+      "name": "Download MP4 from S3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 200]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Compute slot').item.json.seo.title || $('Compute slot').item.json.topic }}",
+        "categoryId": "25",
+        "binaryProperty": "video",
+        "options": {
+          "description": "={{ $('Compute slot').item.json.seo.description || '' }}",
+          "privacyStatus": "private",
+          "publishAt": "={{ $('Compute slot').item.json.publishAt }}",
+          "tags": "={{ ($('Compute slot').item.json.seo.tags || []).join(',') }}",
+          "selfDeclaredMadeForKids": false
+        }
+      },
+      "id": "c0000000-0000-0000-0000-000000000007",
+      "name": "YouTube — upload (private, scheduled)",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [620, 200],
+      "credentials": { "youTubeOAuth2Api": { "id": "YT_CRED", "name": "YouTube OAuth2 (brand)" } },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "notes": "privacyStatus=private + publishAt = scheduled. Idempotency: job id is the key (don't re-run on the same job)."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET status='published', youtube_id=$2, publish_at=$3 WHERE id=$1;",
+        "options": { "queryReplacement": "={{ $('Compute slot').item.json.id }},={{ $json.id }},={{ $('Compute slot').item.json.publishAt }}" }
+      },
+      "id": "c0000000-0000-0000-0000-000000000008",
+      "name": "Mark published",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [840, 200],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram — button tap').item.json.callback_query.message.chat.id }}",
+        "text": "=📤 Scheduled *{{ $('Compute slot').item.json.seo.title || $('Compute slot').item.json.topic }}*\nGoes live: {{ $('Compute slot').item.json.publishAt }}\nVideo id: {{ $json.id }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "c0000000-0000-0000-0000-000000000009",
+      "name": "Telegram — published",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1060, 200],
+      "credentials": { "telegramApi": { "id": "TELEGRAM_CRED", "name": "Telegram bot" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET status='failed', flags=jobs.flags || '[\"rejected by reviewer\"]'::jsonb WHERE id=$1;",
+        "options": { "queryReplacement": "={{ $json.id }}" }
+      },
+      "id": "c0000000-0000-0000-0000-000000000010",
+      "name": "Mark rejected",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-40, 460],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram — button tap').item.json.callback_query.message.chat.id }}",
+        "text": "🗑️ Rejected — not published. Topic marked failed.",
+        "additionalFields": {}
+      },
+      "id": "c0000000-0000-0000-0000-000000000011",
+      "name": "Telegram — rejected",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [180, 460],
+      "credentials": { "telegramApi": { "id": "TELEGRAM_CRED", "name": "Telegram bot" } }
+    }
+  ],
+  "connections": {
+    "Telegram — button tap": { "main": [[{ "node": "Parse callback", "type": "main", "index": 0 }]] },
+    "Parse callback": { "main": [[{ "node": "Approve or Reject", "type": "main", "index": 0 }]] },
+    "Approve or Reject": { "main": [
+      [{ "node": "Load job", "type": "main", "index": 0 }],
+      [{ "node": "Mark rejected", "type": "main", "index": 0 }]
+    ] },
+    "Load job": { "main": [[{ "node": "Compute slot", "type": "main", "index": 0 }]] },
+    "Compute slot": { "main": [[{ "node": "Download MP4 from S3", "type": "main", "index": 0 }]] },
+    "Download MP4 from S3": { "main": [[{ "node": "YouTube — upload (private, scheduled)", "type": "main", "index": 0 }]] },
+    "YouTube — upload (private, scheduled)": { "main": [[{ "node": "Mark published", "type": "main", "index": 0 }]] },
+    "Mark published": { "main": [[{ "node": "Telegram — published", "type": "main", "index": 0 }]] },
+    "Mark rejected": { "main": [[{ "node": "Telegram — rejected", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Kolkata" },
+  "active": false,
+  "tags": [{ "name": "finance-pipeline" }]
+}

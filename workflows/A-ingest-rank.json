@@ -1,0 +1,201 @@
+{
+  "name": "A — Ingest & Rank (daily 07:00 IST)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 0 7 * * *" }
+          ]
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000001",
+      "name": "Schedule 07:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-560, 300]
+    },
+    {
+      "parameters": { "url": "https://economictimes.indiatimes.com/rssfeedstopstories.cms", "options": {} },
+      "id": "a1000000-0000-0000-0000-000000000002",
+      "name": "RSS — Economic Times",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [-320, 120]
+    },
+    {
+      "parameters": { "url": "https://www.livemint.com/rss/money", "options": {} },
+      "id": "a1000000-0000-0000-0000-000000000003",
+      "name": "RSS — Mint Money",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [-320, 260]
+    },
+    {
+      "parameters": { "url": "https://www.moneycontrol.com/rss/MCtopnews.xml", "options": {} },
+      "id": "a1000000-0000-0000-0000-000000000004",
+      "name": "RSS — Moneycontrol",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [-320, 400]
+    },
+    {
+      "parameters": { "url": "https://www.rbi.org.in/pressreleases_rss.xml", "options": {} },
+      "id": "a1000000-0000-0000-0000-000000000005",
+      "name": "RSS — RBI Press",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [-320, 540]
+    },
+    {
+      "parameters": { "numberInputs": 4 },
+      "id": "a1000000-0000-0000-0000-000000000006",
+      "name": "Merge feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [-60, 330]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize each RSS item and compute a stable dedupe hash.\nconst crypto = require('crypto');\nreturn items.map((it) => {\n  const j = it.json;\n  const url = (j.link || j.guid || '').trim();\n  const title = (j.title || '').trim();\n  const key = (url || title).toLowerCase();\n  const hash = crypto.createHash('sha256').update(key).digest('hex');\n  return { json: {\n    hash,\n    url,\n    title,\n    summary: (j.contentSnippet || j.content || j.summary || '').slice(0, 600),\n    source: j.creator || j.isoDate || 'rss',\n    pubDate: j.isoDate || j.pubDate || null\n  }};\n});"
+      },
+      "id": "a1000000-0000-0000-0000-000000000007",
+      "name": "Normalize + hash",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [160, 330]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO seen (hash, url, title, source)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (hash) DO NOTHING\nRETURNING hash, url, title;",
+        "options": {
+          "queryReplacement": "={{ $json.hash }},={{ $json.url }},={{ $json.title }},={{ $json.source }}"
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000008",
+      "name": "Dedupe vs seen",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [380, 330],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } },
+      "notes": "Only genuinely-new headlines return (ON CONFLICT DO NOTHING)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $items().length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000009",
+      "name": "Any new items?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [600, 330]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 2000,\n  system: 'You are a finance content editor for an Indian personal-finance brand.',\n  messages: [ { role: 'user', content: 'From these headlines+summaries, pick the 5 best video topics for TODAY. Prefer: credit cards, banking products, personal finance, savings/deals, and post-facto explainers of market/economic news. AVOID anything needing a buy/sell view. For each return {topic, angle, format: \"short|long\", why_now, monetization_fit: \"high|med|low\", source_url}. Return a JSON array only.\\n\\nInput:\\n' + JSON.stringify($items().map(i => ({title:i.json.title, summary:i.json.summary, url:i.json.url}))) } ]\n}) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000010",
+      "name": "Claude — rank topics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [820, 230],
+      "credentials": { "httpHeaderAuth": { "id": "ANTHROPIC_CRED", "name": "Anthropic x-api-key" } },
+      "notes": "httpHeaderAuth credential supplies the x-api-key header. Prompt mirrors prompts/rank.md."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pull the JSON array out of Claude's response and emit one item per topic.\nconst text = $json.content?.[0]?.text ?? '[]';\nlet topics = [];\ntry { topics = JSON.parse(text); } catch (e) {\n  const m = text.match(/\\[([\\s\\S]*)\\]/);\n  topics = m ? JSON.parse(m[0]) : [];\n}\nreturn topics.map((t, i) => ({ json: { ...t, rank: i + 1 } }));"
+      },
+      "id": "a1000000-0000-0000-0000-000000000011",
+      "name": "Parse topics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 230]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO jobs (type, status, topic, angle, source_url, priority)\nVALUES ($1, 'queued', $2, $3, $4, 'normal')\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ $json.format === 'long' ? 'long' : 'short' }},={{ $json.topic }},={{ $json.angle }},={{ $json.source_url }}"
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000012",
+      "name": "Queue topics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1260, 230],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } },
+      "notes": "Assisted posture: rows sit in 'queued' until you greenlight in the Telegram digest."
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📰 *Today's topic picks* (reply with the numbers to greenlight)\n\n{{ $items().map(i => `${i.json.rank}. *${i.json.topic}* (${i.json.format}) — ${i.json.why_now} [💰${i.json.monetization_fit}]`).join('\\n') }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "a1000000-0000-0000-0000-000000000013",
+      "name": "Telegram digest",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1480, 230],
+      "credentials": { "telegramApi": { "id": "TELEGRAM_CRED", "name": "Telegram bot" } }
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-0000-0000-000000000014",
+      "name": "No new topics — stop",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [820, 440]
+    }
+  ],
+  "connections": {
+    "Schedule 07:00 IST": { "main": [[
+      { "node": "RSS — Economic Times", "type": "main", "index": 0 },
+      { "node": "RSS — Mint Money", "type": "main", "index": 0 },
+      { "node": "RSS — Moneycontrol", "type": "main", "index": 0 },
+      { "node": "RSS — RBI Press", "type": "main", "index": 0 }
+    ]] },
+    "RSS — Economic Times": { "main": [[{ "node": "Merge feeds", "type": "main", "index": 0 }]] },
+    "RSS — Mint Money": { "main": [[{ "node": "Merge feeds", "type": "main", "index": 1 }]] },
+    "RSS — Moneycontrol": { "main": [[{ "node": "Merge feeds", "type": "main", "index": 2 }]] },
+    "RSS — RBI Press": { "main": [[{ "node": "Merge feeds", "type": "main", "index": 3 }]] },
+    "Merge feeds": { "main": [[{ "node": "Normalize + hash", "type": "main", "index": 0 }]] },
+    "Normalize + hash": { "main": [[{ "node": "Dedupe vs seen", "type": "main", "index": 0 }]] },
+    "Dedupe vs seen": { "main": [[{ "node": "Any new items?", "type": "main", "index": 0 }]] },
+    "Any new items?": { "main": [
+      [{ "node": "Claude — rank topics", "type": "main", "index": 0 }],
+      [{ "node": "No new topics — stop", "type": "main", "index": 0 }]
+    ] },
+    "Claude — rank topics": { "main": [[{ "node": "Parse topics", "type": "main", "index": 0 }]] },
+    "Parse topics": { "main": [[{ "node": "Queue topics", "type": "main", "index": 0 }]] },
+    "Queue topics": { "main": [[{ "node": "Telegram digest", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Kolkata" },
+  "active": false,
+  "tags": [{ "name": "finance-pipeline" }]
+}

@@ -1,0 +1,23 @@
+# Phase 3.2 — Caddy auto-HTTPS. Replace flow.yourbrand.in with your real subdomain
+# (must already have an A-record pointing at this box's Elastic IP).
+# Caddy fetches + renews the Let's Encrypt cert automatically — nothing else to do.
+
+flow.yourbrand.in {
+	encode zstd gzip
+
+	# n8n speaks websockets for the editor + live executions; Caddy proxies them transparently.
+	reverse_proxy n8n:5678
+
+	# basic hardening headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+
+	log {
+		output file /data/access.log
+		format json
+	}
+}

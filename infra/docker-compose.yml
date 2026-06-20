@@ -1,0 +1,78 @@
+# Phase 3.2 — n8n + Postgres + Caddy (auto-HTTPS) on a single EC2 box.
+# Deploy: copy this dir to ~/stack on the instance, fill in .env, then `docker compose up -d`.
+# See ../README.md and the build plan Phase 3 for the full walkthrough.
+
+services:
+  caddy: # auto-HTTPS reverse proxy (terminates TLS, forwards to n8n)
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - n8n
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${PG_USER:-n8n}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_DB: ${PG_DB:-n8n}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      # auto-applies on first boot of an empty data dir (creates jobs/seen tables):
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-n8n} -d ${PG_DB:-n8n}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${PG_DB:-n8n}
+      DB_POSTGRESDB_USER: ${PG_USER:-n8n}
+      DB_POSTGRESDB_PASSWORD: ${PG_PASS}
+      N8N_HOST: ${N8N_HOST}
+      N8N_PROTOCOL: https
+      N8N_PORT: 5678
+      WEBHOOK_URL: https://${N8N_HOST}/
+      N8N_EDITOR_BASE_URL: https://${N8N_HOST}/
+      N8N_ENCRYPTION_KEY: ${N8N_KEY}
+      GENERIC_TIMEZONE: Asia/Kolkata
+      TZ: Asia/Kolkata
+      N8N_RUNNERS_ENABLED: "true"
+      # the render worker is reachable on the docker network as http://render:4000
+      # (only if you run it as a container; see profile below). Default plan runs it
+      # on the host via pm2 — then n8n calls http://host.docker.internal:4000.
+      RENDER_URL: ${RENDER_URL:-http://host.docker.internal:4000}
+      # passed through so workflow expressions ({{ $env.* }}) resolve
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      ASSETS_BUCKET: ${ASSETS_BUCKET}
+      AWS_REGION: ${AWS_REGION}
+      ANALYTICS_SHEET_ID: ${ANALYTICS_SHEET_ID}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data: {}
+  n8n_data: {}
+  caddy_data: {}
+  caddy_config: {}

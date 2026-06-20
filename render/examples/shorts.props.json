@@ -1,0 +1,12 @@
+{
+  "title": "The card mistake costing you ₹12,000 a year",
+  "script": "Most people pay their credit card bill in full and feel like they're winning. But here's the part the bank won't highlight. The real money is in matching the card to where you actually spend. Put your fuel and groceries on a flat cashback card, and your travel on a miles card, and the same spending quietly earns you twelve thousand rupees more every year. Same money out. More money back. Follow for the weekly card breakdown.",
+  "audioUrl": "https://yourbrand-assets.s3.ap-south-1.amazonaws.com/audio/example.mp3",
+  "audioDurationInSeconds": 38,
+  "onscreen": [
+    { "t": 6.0, "type": "number", "text": "₹12,000", "durationInSeconds": 1.8 }
+  ],
+  "brollUrls": [],
+  "showCryptoDisclaimer": false,
+  "fps": 30
+}

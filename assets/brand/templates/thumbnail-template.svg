@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" font-family="Inter, system-ui, sans-serif">
+  <title>Finplaza YouTube Thumbnail Template 1280x720</title>
+  <desc>Editable Canva-ready thumbnail guide for Finplaza Indian personal finance channel. Bold, energetic, SEBI-safe.</desc>
+
+  <defs>
+    <!-- Background vertical gradient: deep navy to bgAlt -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#111A2E"/>
+    </linearGradient>
+
+    <!-- Accent band gradient: money green to soft green -->
+    <linearGradient id="accentBand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16C784"/>
+      <stop offset="1" stop-color="#1FE08F"/>
+    </linearGradient>
+
+    <!-- Gold badge gradient -->
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6C544"/>
+      <stop offset="1" stop-color="#F6C544"/>
+    </linearGradient>
+
+    <!-- Soft vignette to keep headline punchy -->
+    <radialGradient id="vignette" cx="0.35" cy="0.45" r="0.85">
+      <stop offset="0" stop-color="#0B1220" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0B1220" stop-opacity="0.55"/>
+    </radialGradient>
+
+    <!-- Photo-area subtle fill -->
+    <linearGradient id="photoFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#111A2E"/>
+      <stop offset="1" stop-color="#0B1220"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ===== BASE BACKGROUND ===== -->
+  <rect x="0" y="0" width="1280" height="720" fill="url(#bgGrad)"/>
+
+  <!-- ===== SUBTLE ACCENT SHAPE BAND (diagonal, behind everything) ===== -->
+  <g opacity="0.16">
+    <polygon points="0,560 1280,300 1280,460 0,720" fill="url(#accentBand)"/>
+  </g>
+  <g opacity="0.10">
+    <polygon points="0,150 520,0 760,0 0,420" fill="url(#accentBand)"/>
+  </g>
+
+  <!-- Decorative oversized rupee glyph watermark -->
+  <text x="40" y="700" font-family="Anton, Impact, sans-serif" font-size="560" fill="#16C784" opacity="0.06">&#8377;</text>
+
+  <!-- Vignette over background art -->
+  <rect x="0" y="0" width="1280" height="720" fill="url(#vignette)"/>
+
+  <!-- ===== TITLE-SAFE MARGIN (6% inset = ~77px x / ~43px y) ===== -->
+  <rect x="76.8" y="43.2" width="1126.4" height="633.6" fill="none"
+        stroke="#9AA7BD" stroke-width="2" stroke-dasharray="10 8" opacity="0.55"/>
+  <text x="84" y="668" font-family="Inter, system-ui, sans-serif" font-size="13"
+        fill="#9AA7BD" opacity="0.7">title-safe margin (6%) — keep text inside</text>
+
+  <!-- ===== FINPLAZA WORDMARK BUG (top-left) ===== -->
+  <g transform="translate(96,84)">
+    <circle cx="11" cy="-6" r="11" fill="#16C784"/>
+    <text x="32" y="2" font-family="Anton, Impact, sans-serif" font-size="34"
+          fill="#F4F7FB" letter-spacing="1">FINPLAZA</text>
+    <text x="220" y="0" font-family="Inter, system-ui, sans-serif" font-size="18"
+          fill="#9AA7BD">@finplaza</text>
+  </g>
+
+  <!-- ===== HEADLINE PLACEHOLDER (left ~60%, UPPERCASE display) ===== -->
+  <!-- Accent kicker tag above headline -->
+  <g transform="translate(96,180)">
+    <rect x="0" y="-30" width="232" height="40" rx="8" fill="#16C784"/>
+    <text x="16" y="-2" font-family="Anton, Impact, sans-serif" font-size="24"
+          fill="#0B1220" letter-spacing="1">CREDIT CARDS</text>
+  </g>
+
+  <!-- Main headline: 3-5 words, very large, fills left 60% -->
+  <g font-family="Anton, Impact, sans-serif" fill="#F4F7FB" letter-spacing="1">
+    <text x="92" y="320" font-size="118">YOUR BIG</text>
+    <text x="92" y="430" font-size="118">MONEY <tspan fill="#16C784">HOOK</tspan></text>
+  </g>
+  <!-- Editing hint for headline -->
+  <text x="94" y="466" font-family="Inter, system-ui, sans-serif" font-size="15"
+        fill="#9AA7BD">↑ Replace HEADLINE — 3 to 5 words, UPPERCASE (Anton)</text>
+
+  <!-- Supporting one-liner -->
+  <text x="94" y="512" font-family="Inter, system-ui, sans-serif" font-size="26"
+        fill="#F4F7FB" font-weight="700">What it means for your wallet
+    <tspan fill="#9AA7BD" font-weight="400"> — explained</tspan>
+  </text>
+
+  <!-- ===== GOLD NUMBER / BADGE CALLOUT ===== -->
+  <g transform="translate(94,560)">
+    <rect x="0" y="0" width="250" height="92" rx="18" fill="#F6C544"/>
+    <text x="125" y="64" text-anchor="middle" font-family="Anton, Impact, sans-serif"
+          font-size="58" fill="#0B1220" letter-spacing="1">+&#8377;50K</text>
+    <text x="0" y="116" font-family="Inter, system-ui, sans-serif" font-size="14"
+          fill="#9AA7BD">big number / badge (gold)</text>
+  </g>
+
+  <!-- ===== SUBJECT / PHOTO PLACEHOLDER (right ~35%) ===== -->
+  <g transform="translate(836,108)">
+    <rect x="0" y="0" width="368" height="504" rx="20" fill="url(#photoFill)"
+          stroke="#16C784" stroke-width="3" stroke-dasharray="16 12"/>
+    <!-- simple person/photo icon -->
+    <g transform="translate(184,210)" fill="none" stroke="#9AA7BD" stroke-width="5" opacity="0.8">
+      <circle cx="0" cy="-34" r="44"/>
+      <path d="M -78 96 a 78 86 0 0 1 156 0" stroke-linecap="round"/>
+    </g>
+    <text x="184" y="372" text-anchor="middle" font-family="Anton, Impact, sans-serif"
+          font-size="34" fill="#F4F7FB" letter-spacing="1">SUBJECT /</text>
+    <text x="184" y="412" text-anchor="middle" font-family="Anton, Impact, sans-serif"
+          font-size="34" fill="#F4F7FB" letter-spacing="1">PHOTO HERE</text>
+    <text x="184" y="448" text-anchor="middle" font-family="Inter, system-ui, sans-serif"
+          font-size="15" fill="#9AA7BD">drop image in Canva &amp; mask to frame</text>
+  </g>
+
+  <!-- ===== COMPLIANCE / SEBI-SAFE NOTE (uses danger color, allowed lane) ===== -->
+  <g transform="translate(96,624)">
+    <rect x="0" y="-22" width="14" height="30" rx="3" fill="#FF5C5C"/>
+    <text x="24" y="0" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#9AA7BD">
+      SEBI-safe: education &amp; post-facto news only — no buy/sell/hold, targets or return calls.
+    </text>
+  </g>
+
+  <!-- ===== TIMESTAMP CLEAR-ZONE NOTE (bottom-right) ===== -->
+  <text x="1196" y="690" text-anchor="end" font-family="Inter, system-ui, sans-serif"
+        font-size="14" fill="#9AA7BD" opacity="0.85">(timestamp overlays here — keep clear)</text>
+</svg>

@@ -1,0 +1,140 @@
+{
+  "name": "D — Analytics (daily 08:00 IST)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [ { "field": "cronExpression", "expression": "0 0 8 * * *" } ] }
+      },
+      "id": "d0000000-0000-0000-0000-000000000001",
+      "name": "Schedule 08:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// yesterday's date range in YYYY-MM-DD (Analytics API wants date strings)\nconst d = new Date(); d.setUTCDate(d.getUTCDate() - 1);\nconst day = d.toISOString().slice(0, 10);\nreturn [{ json: { startDate: day, endDate: day } }];"
+      },
+      "id": "d0000000-0000-0000-0000-000000000002",
+      "name": "Yesterday range",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://youtubeanalytics.googleapis.com/v2/reports",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "youTubeOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": { "parameters": [
+          { "name": "ids", "value": "channel==MINE" },
+          { "name": "startDate", "value": "={{ $json.startDate }}" },
+          { "name": "endDate", "value": "={{ $json.endDate }}" },
+          { "name": "metrics", "value": "views,estimatedMinutesWatched,averageViewPercentage,subscribersGained,estimatedRevenue" },
+          { "name": "dimensions", "value": "video" },
+          { "name": "sort", "value": "-views" },
+          { "name": "maxResults", "value": "50" }
+        ] },
+        "options": {}
+      },
+      "id": "d0000000-0000-0000-0000-000000000003",
+      "name": "YouTube Analytics API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-240, 300],
+      "credentials": { "youTubeOAuth2Api": { "id": "YT_CRED", "name": "YouTube OAuth2 (brand)" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Flatten the Analytics rows ([columnHeaders] + [rows]) into one item per video.\nconst headers = ($json.columnHeaders || []).map(h => h.name);\nconst rows = $json.rows || [];\nconst day = $('Yesterday range').first().json.startDate;\nreturn rows.map(r => {\n  const o = { date: day };\n  headers.forEach((h, i) => { o[h] = r[i]; });\n  return { json: o };\n});"
+      },
+      "id": "d0000000-0000-0000-0000-000000000004",
+      "name": "Flatten rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-20, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.ANALYTICS_SHEET_ID }}" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "daily" },
+        "columns": { "mappingMode": "autoMapInputData", "value": {}, "matchingColumns": [] },
+        "options": {}
+      },
+      "id": "d0000000-0000-0000-0000-000000000005",
+      "name": "Append to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [200, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets OAuth2" } },
+      "notes": "This sheet feeds the Looker Studio dashboard (views, CTR, retention, subs, RPM, revenue)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "version": 2, "caseSensitive": true },
+          "combinator": "and",
+          "conditions": [
+            { "leftValue": "={{ new Date().getUTCDay() }}", "rightValue": 1, "operator": { "type": "number", "operation": "equals" } }
+          ]
+        }
+      },
+      "id": "d0000000-0000-0000-0000-000000000006",
+      "name": "Weekly? (Monday)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 1500,\n  messages: [{ role: 'user', content: `Given the last 7 days of per-video metrics (views, watch %, subs gained, revenue) below, tell me which features correlate with high CTR & retention, and propose next week's topic weighting. Be concrete.\\n\\n${JSON.stringify($items().map(i => i.json))}` }]\n}) }}",
+        "options": {}
+      },
+      "id": "d0000000-0000-0000-0000-000000000007",
+      "name": "Claude — weekly summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 200],
+      "credentials": { "httpHeaderAuth": { "id": "ANTHROPIC_CRED", "name": "Anthropic x-api-key" } }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📊 *Weekly analytics summary*\n\n{{ $json.content?.[0]?.text }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "d0000000-0000-0000-0000-000000000008",
+      "name": "Telegram — weekly digest",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [860, 200],
+      "credentials": { "telegramApi": { "id": "TELEGRAM_CRED", "name": "Telegram bot" } }
+    }
+  ],
+  "connections": {
+    "Schedule 08:00 IST": { "main": [[{ "node": "Yesterday range", "type": "main", "index": 0 }]] },
+    "Yesterday range": { "main": [[{ "node": "YouTube Analytics API", "type": "main", "index": 0 }]] },
+    "YouTube Analytics API": { "main": [[{ "node": "Flatten rows", "type": "main", "index": 0 }]] },
+    "Flatten rows": { "main": [[{ "node": "Append to Google Sheet", "type": "main", "index": 0 }]] },
+    "Append to Google Sheet": { "main": [[{ "node": "Weekly? (Monday)", "type": "main", "index": 0 }]] },
+    "Weekly? (Monday)": { "main": [
+      [{ "node": "Claude — weekly summary", "type": "main", "index": 0 }],
+      []
+    ] },
+    "Claude — weekly summary": { "main": [[{ "node": "Telegram — weekly digest", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Kolkata" },
+  "active": false,
+  "tags": [{ "name": "finance-pipeline" }]
+}

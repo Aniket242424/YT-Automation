@@ -1,0 +1,40 @@
+# --- secrets & env ---
+.env
+*.env
+!*.env.example
+infra/.env
+render/.env
+**/credentials.json
+**/token.json
+*.pem
+
+# --- node / remotion ---
+node_modules/
+render/build/
+render/out/
+render/.remotion/
+npm-debug.log*
+yarn-error.log*
+
+# --- render artifacts ---
+*.mp4
+*.mp3
+*.wav
+assets/renders/
+assets/audio/
+
+# --- n8n local data ---
+infra/n8n_data/
+infra/pg_data/
+infra/caddy_data/
+
+# --- os / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/settings.local.json
+
+# keep brand assets tracked, ignore large source files
+assets/brand/*.psd
+assets/brand/*.ai

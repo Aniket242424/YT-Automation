@@ -1,0 +1,62 @@
+# LOCAL build on your own PC (no Caddy / HTTPS / domain needed).
+# n8n runs at http://localhost:5678 and talks to a local Postgres.
+# These are DEV-ONLY credentials — this box is only reachable from your PC.
+#
+# Run from the infra/ folder:
+#   docker compose -f docker-compose.local.yml up -d
+# Then open http://localhost:5678 and create your n8n owner account.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: n8nlocal
+      POSTGRES_DB: n8n
+    volumes:
+      - pg_data_local:/var/lib/postgresql/data
+      # auto-creates the jobs/seen tables on first boot:
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    # no host port for Postgres — n8n reaches it via the internal docker network
+    # (this avoids clashing with any Postgres already running on your PC, e.g. the trading bot)
+    restart: unless-stopped
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: n8nlocal
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      # allow login over plain http on localhost:
+      N8N_SECURE_COOKIE: "false"
+      N8N_ENCRYPTION_KEY: local-dev-key-please-change-on-server
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: Asia/Kolkata
+      TZ: Asia/Kolkata
+      N8N_RUNNERS_ENABLED: "true"
+      # allow {{ $env.* }} in node expressions (so nodes can read the API keys below)
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # the Remotion render worker runs on the host (Node), reachable via:
+      RENDER_URL: http://host.docker.internal:4000
+      # AI brain keys — read from infra/.env (git-ignored). Referenced in nodes as {{ $env.* }}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_API_KEY_2: ${GEMINI_API_KEY_2:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "5678:5678"
+    depends_on:
+      - postgres
+    volumes:
+      - n8n_data_local:/home/node/.n8n
+    restart: unless-stopped
+
+volumes:
+  pg_data_local: {}
+  n8n_data_local: {}

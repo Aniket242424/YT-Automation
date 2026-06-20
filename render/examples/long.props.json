@@ -1,0 +1,23 @@
+{
+  "title": "How RBI's new rule changes your savings account",
+  "audioUrl": "https://yourbrand-assets.s3.ap-south-1.amazonaws.com/audio/example-long.mp3",
+  "audioDurationInSeconds": 360,
+  "sections": [
+    { "title": "What actually changed", "startInSeconds": 8 },
+    { "title": "Why it matters for you", "startInSeconds": 110 },
+    { "title": "What to do this week", "startInSeconds": 250 }
+  ],
+  "onscreen": [
+    { "t": 60, "type": "number", "text": "4.0%", "durationInSeconds": 2 }
+  ],
+  "charts": [
+    {
+      "src": "savings_rate_trend.png",
+      "t": 130,
+      "durationInSeconds": 6
+    }
+  ],
+  "brollUrls": [],
+  "showCryptoDisclaimer": false,
+  "fps": 30
+}

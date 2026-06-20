@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#111A2E"/>
+    </linearGradient>
+
+    <!-- Money-green radial glow -->
+    <radialGradient id="greenGlow" cx="50%" cy="44%" r="55%">
+      <stop offset="0" stop-color="#16C784" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#16C784" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#16C784" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Secondary soft glow bottom -->
+    <radialGradient id="glowBottom" cx="50%" cy="100%" r="60%">
+      <stop offset="0" stop-color="#1FE08F" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#1FE08F" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Wordmark fill gradient -->
+    <linearGradient id="markGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4F7FB"/>
+      <stop offset="1" stop-color="#9AA7BD"/>
+    </linearGradient>
+
+    <!-- Accent bar gradient -->
+    <linearGradient id="accentBar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#16C784"/>
+      <stop offset="1" stop-color="#1FE08F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base background -->
+  <rect x="0" y="0" width="1920" height="1080" fill="url(#bgGrad)"/>
+  <rect x="0" y="0" width="1920" height="1080" fill="url(#greenGlow)"/>
+  <rect x="0" y="0" width="1920" height="1080" fill="url(#glowBottom)"/>
+
+  <!-- Subtle dotted texture rows (energetic accent) -->
+  <g fill="#111A2E" opacity="0.55">
+    <circle cx="120" cy="120" r="3"/>
+    <circle cx="170" cy="120" r="3"/>
+    <circle cx="220" cy="120" r="3"/>
+    <circle cx="1700" cy="960" r="3"/>
+    <circle cx="1750" cy="960" r="3"/>
+    <circle cx="1800" cy="960" r="3"/>
+  </g>
+
+  <!-- Top energetic accent bars -->
+  <g>
+    <rect x="0" y="0" width="1920" height="8" fill="url(#accentBar)"/>
+    <rect x="0" y="14" width="1920" height="2" fill="#16C784" opacity="0.35"/>
+  </g>
+
+  <!-- Decorative thin diagonal bars left -->
+  <g opacity="0.9">
+    <rect x="120" y="300" width="90" height="10" rx="5" fill="#16C784" transform="rotate(-35 165 305)"/>
+    <rect x="150" y="360" width="60" height="10" rx="5" fill="#1FE08F" transform="rotate(-35 180 365)"/>
+    <rect x="135" y="420" width="40" height="10" rx="5" fill="#F6C544" transform="rotate(-35 155 425)"/>
+  </g>
+
+  <!-- Decorative thin diagonal bars right -->
+  <g opacity="0.9">
+    <rect x="1710" y="700" width="90" height="10" rx="5" fill="#16C784" transform="rotate(-35 1755 705)"/>
+    <rect x="1740" y="640" width="60" height="10" rx="5" fill="#1FE08F" transform="rotate(-35 1770 645)"/>
+    <rect x="1745" y="760" width="40" height="10" rx="5" fill="#F6C544" transform="rotate(-35 1765 765)"/>
+  </g>
+
+  <!-- Up-arrow / growth motif (top-right) -->
+  <g transform="translate(1500 230)" opacity="0.95">
+    <polyline points="0,120 50,70 95,100 170,20" fill="none" stroke="#16C784" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="138,20 170,20 170,52" fill="none" stroke="#1FE08F" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Rupee motif (bottom-left) -->
+  <g transform="translate(245 760)" opacity="0.9">
+    <circle cx="60" cy="60" r="74" fill="none" stroke="#16C784" stroke-width="4" opacity="0.45"/>
+    <text x="60" y="98" font-family="Anton, Impact, sans-serif" font-size="120" fill="#16C784" text-anchor="middle">&#8377;</text>
+  </g>
+
+  <!-- Eyebrow kicker -->
+  <g text-anchor="middle">
+    <rect x="828" y="330" width="264" height="48" rx="24" fill="#111A2E" stroke="#16C784" stroke-width="1.5"/>
+    <text x="960" y="363" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="6" fill="#16C784">INDIAN PERSONAL FINANCE</text>
+  </g>
+
+  <!-- Wordmark: Finplaza -->
+  <g text-anchor="middle">
+    <text x="945" y="600" font-family="Anton, Impact, sans-serif" font-size="270" letter-spacing="2" fill="url(#markGrad)">FINPLAZA</text>
+    <!-- accent dot -->
+    <circle cx="1545" cy="585" r="26" fill="#16C784"/>
+    <circle cx="1545" cy="585" r="26" fill="none" stroke="#1FE08F" stroke-width="2" opacity="0.6"/>
+  </g>
+
+  <!-- Handle -->
+  <text x="960" y="675" font-family="Inter, system-ui, sans-serif" font-size="34" font-weight="600" letter-spacing="3" fill="#9AA7BD" text-anchor="middle">@finplaza</text>
+
+  <!-- Divider with accent center -->
+  <g>
+    <rect x="660" y="730" width="240" height="3" rx="1.5" fill="#9AA7BD" opacity="0.35"/>
+    <rect x="900" y="726" width="120" height="11" rx="5.5" fill="url(#accentBar)"/>
+    <rect x="1020" y="730" width="240" height="3" rx="1.5" fill="#9AA7BD" opacity="0.35"/>
+  </g>
+
+  <!-- Tagline placeholder -->
+  <text x="960" y="820" font-family="Inter, system-ui, sans-serif" font-size="44" font-weight="700" fill="#16C784" text-anchor="middle">{{TAGLINE}}</text>
+
+  <!-- Topic chips -->
+  <g font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="600" text-anchor="middle">
+    <g>
+      <rect x="565" y="880" width="190" height="52" rx="26" fill="#111A2E" stroke="#16C784" stroke-width="1.5"/>
+      <text x="660" y="913" fill="#F4F7FB">Credit Cards</text>
+    </g>
+    <g>
+      <rect x="775" y="880" width="160" height="52" rx="26" fill="#111A2E" stroke="#16C784" stroke-width="1.5"/>
+      <text x="855" y="913" fill="#F4F7FB">Banking</text>
+    </g>
+    <g>
+      <rect x="955" y="880" width="240" height="52" rx="26" fill="#111A2E" stroke="#16C784" stroke-width="1.5"/>
+      <text x="1075" y="913" fill="#F4F7FB">Savings &amp; Deals</text>
+    </g>
+    <g>
+      <rect x="1215" y="880" width="240" height="52" rx="26" fill="#111A2E" stroke="#F6C544" stroke-width="1.5"/>
+      <text x="1335" y="913" fill="#F4F7FB">Market News Explained</text>
+    </g>
+  </g>
+
+  <!-- Compliance strip -->
+  <g text-anchor="middle">
+    <text x="960" y="1010" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="600" letter-spacing="1" fill="#9AA7BD">Educational content only. Post-facto news &amp; explainers &#8212; not investment advice.</text>
+  </g>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="1064" width="1920" height="16" fill="url(#accentBar)"/>
+</svg>

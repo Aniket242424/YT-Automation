@@ -1,0 +1,50 @@
+{
+  "name": "TEST — Gemini brain (Hinglish script)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "t0000000-0000-0000-0000-000000000001",
+      "name": "When clicking Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-300, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  contents: [ { parts: [ { text: \"Tu Finplaza ka head writer hai \\u2014 ek bold, energetic Indian personal-finance Shorts channel. Ek 30-second HINGLISH (Roman-script Hindi + English finance terms jaise credit card, EMI, cashback) Shorts script likh is topic par: 'Credit card ka minimum payment trap'. Hook pehli line mein. Numbers digits mein. Sirf script return kar, aur kuch nahi.\" } ] } ],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } }\n}) }}",
+        "options": {}
+      },
+      "id": "t0000000-0000-0000-0000-000000000002",
+      "name": "Gemini — write Hinglish script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-60, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pull the text out of Gemini's response shape.\nconst text = $json.candidates?.[0]?.content?.parts?.[0]?.text ?? JSON.stringify($json);\nreturn [{ json: { script: text } }];"
+      },
+      "id": "t0000000-0000-0000-0000-000000000003",
+      "name": "Extract script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [180, 300]
+    }
+  ],
+  "connections": {
+    "When clicking Execute": { "main": [[{ "node": "Gemini — write Hinglish script", "type": "main", "index": 0 }]] },
+    "Gemini — write Hinglish script": { "main": [[{ "node": "Extract script", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}

@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#111A2E"/>
+    </linearGradient>
+    <linearGradient id="safeStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16C784"/>
+      <stop offset="1" stop-color="#1FE08F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1080" height="1920" fill="url(#bgGrad)"/>
+
+  <!-- Subtle phone-frame inset border -->
+  <rect x="10" y="10" width="1060" height="1900" rx="44" ry="44" fill="none" stroke="#1FE08F" stroke-opacity="0.18" stroke-width="2"/>
+
+  <!-- ================= UNSAFE OVERLAYS ================= -->
+
+  <!-- TOP UNSAFE BAND ~0-150 -->
+  <rect x="0" y="0" width="1080" height="150" fill="#FF5C5C" fill-opacity="0.22"/>
+  <line x1="0" y1="150" x2="1080" y2="150" stroke="#FF5C5C" stroke-opacity="0.55" stroke-width="2" stroke-dasharray="14 10"/>
+
+  <!-- RIGHT UNSAFE COLUMN ~960-1080 (like/comment/share) -->
+  <rect x="960" y="150" width="120" height="1250" fill="#FF5C5C" fill-opacity="0.22"/>
+  <line x1="960" y1="150" x2="960" y2="1400" stroke="#FF5C5C" stroke-opacity="0.55" stroke-width="2" stroke-dasharray="14 10"/>
+
+  <!-- BOTTOM UNSAFE BAND ~1400-1920 (caption, handle, progress, CTA) -->
+  <rect x="0" y="1400" width="1080" height="520" fill="#FF5C5C" fill-opacity="0.22"/>
+  <line x1="0" y1="1400" x2="1080" y2="1400" stroke="#FF5C5C" stroke-opacity="0.55" stroke-width="2" stroke-dasharray="14 10"/>
+
+  <!-- ================= RIGHT-RAIL ICON HINTS ================= -->
+  <g fill="none" stroke="#F4F7FB" stroke-opacity="0.45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- heart -->
+    <path d="M1020 760 c-9 -16 -34 -14 -34 6 c0 16 22 30 34 40 c12 -10 34 -24 34 -40 c0 -20 -25 -22 -34 -6 z"/>
+    <!-- comment bubble -->
+    <path d="M992 900 h56 a8 8 0 0 1 8 8 v34 a8 8 0 0 1 -8 8 h-34 l-18 16 v-16 h-4 a8 8 0 0 1 -8 -8 v-34 a8 8 0 0 1 8 -8 z"/>
+    <!-- share arrow -->
+    <path d="M988 1060 l44 -22 l-44 -22 v14 l-12 8 l12 8 z"/>
+    <!-- bookmark -->
+    <path d="M1002 1180 h36 v54 l-18 -14 l-18 14 z"/>
+  </g>
+
+  <!-- ================= SAFE CONTENT ZONE ================= -->
+  <!-- clear middle area: x ~70-900, y ~210-1340 -->
+  <rect x="70" y="210" width="830" height="1130" rx="34" ry="34"
+        fill="none" stroke="url(#safeStroke)" stroke-width="6" stroke-dasharray="26 18"/>
+
+  <!-- corner ticks for crispness -->
+  <g stroke="#1FE08F" stroke-width="6" stroke-linecap="round">
+    <path d="M70 250 v-40 h40" fill="none"/>
+    <path d="M900 250 v-40 h-40" fill="none"/>
+    <path d="M70 1300 v40 h40" fill="none"/>
+    <path d="M900 1300 v40 h-40" fill="none"/>
+  </g>
+
+  <!-- SAFE ZONE label pill -->
+  <g>
+    <rect x="290" y="700" width="500" height="120" rx="60" ry="60" fill="#16C784"/>
+    <text x="540" y="770" font-family="Anton, Impact, sans-serif" font-size="58" letter-spacing="2"
+          text-anchor="middle" fill="#0B1220">SAFE CONTENT ZONE</text>
+  </g>
+  <text x="540" y="858" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="600"
+        text-anchor="middle" fill="#9AA7BD">Put hooks, big numbers &amp; key text here</text>
+
+  <!-- big number demo (gold) to show ideal placement -->
+  <text x="540" y="470" font-family="Anton, Impact, sans-serif" font-size="150"
+        text-anchor="middle" fill="#F6C544">5% CASHBACK</text>
+  <text x="540" y="560" font-family="Inter, system-ui, sans-serif" font-size="34" font-weight="700"
+        text-anchor="middle" fill="#F4F7FB">example headline lives safely inside</text>
+
+  <!-- ================= BRAND HEADER ================= -->
+  <text x="540" y="118" font-family="Anton, Impact, sans-serif" font-size="68" letter-spacing="3"
+        text-anchor="middle" fill="#F4F7FB">FINPLAZA</text>
+  <text x="540" y="92" font-family="Inter, system-ui, sans-serif" font-size="26" font-weight="700"
+        text-anchor="middle" fill="#16C784" letter-spacing="6">SHORTS SAFE-ZONE GUIDE</text>
+
+  <!-- ================= ZONE ANNOTATIONS ================= -->
+  <!-- top band label -->
+  <text x="40" y="40" font-family="Inter, system-ui, sans-serif" font-size="26" font-weight="700" fill="#FF5C5C">UNSAFE TOP BAND</text>
+  <text x="40" y="68" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#F4F7FB">status bar / app UI hides text here (0&#8211;150px)</text>
+
+  <!-- right column label (rotated) -->
+  <text x="1020" y="450" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="700"
+        fill="#FF5C5C" text-anchor="middle" transform="rotate(90 1020 450)">UNSAFE RIGHT RAIL &#8226; like / comment / share / save (960&#8211;1080px)</text>
+
+  <!-- bottom band labels -->
+  <text x="40" y="1450" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="#FF5C5C">UNSAFE BOTTOM BAND (1400&#8211;1920px)</text>
+  <text x="40" y="1484" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#F4F7FB">caption, @handle, progress bar &amp; CTA overlap here</text>
+
+  <!-- ================= CAPTION BASELINE GUIDE ================= -->
+  <line x1="40" y1="1560" x2="1040" y2="1560" stroke="#F6C544" stroke-opacity="0.85" stroke-width="2" stroke-dasharray="10 8"/>
+  <circle cx="40" cy="1560" r="6" fill="#F6C544"/>
+  <text x="60" y="1552" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="700" fill="#F6C544">caption baseline (y=1560)</text>
+
+  <!-- mock platform UI inside bottom band -->
+  <text x="40" y="1620" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="700" fill="#F4F7FB">@finplaza</text>
+  <text x="40" y="1660" font-family="Inter, system-ui, sans-serif" font-size="26" fill="#9AA7BD">caption text wraps here &#8226; keep it short</text>
+  <rect x="40" y="1700" width="1000" height="8" rx="4" fill="#9AA7BD" fill-opacity="0.4"/>
+  <rect x="40" y="1700" width="430" height="8" rx="4" fill="#16C784"/>
+
+  <!-- CTA chip mock -->
+  <rect x="40" y="1740" width="300" height="70" rx="35" fill="#1FE08F"/>
+  <text x="190" y="1786" font-family="Anton, Impact, sans-serif" font-size="36" letter-spacing="1"
+        text-anchor="middle" fill="#0B1220">FOLLOW</text>
+
+  <!-- ================= LEGEND ================= -->
+  <g>
+    <rect x="40" y="1840" width="1000" height="62" rx="16" fill="#111A2E" stroke="#9AA7BD" stroke-opacity="0.3" stroke-width="1"/>
+    <rect x="64" y="1858" width="26" height="26" rx="5" fill="#FF5C5C" fill-opacity="0.55"/>
+    <text x="104" y="1879" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#F4F7FB">Unsafe &#8211; avoid key text</text>
+    <rect x="430" y="1858" width="26" height="26" rx="5" fill="none" stroke="#16C784" stroke-width="3" stroke-dasharray="6 4"/>
+    <text x="470" y="1879" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#F4F7FB">Safe content zone</text>
+    <text x="760" y="1879" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#9AA7BD">Education only &#8226; not advice</text>
+  </g>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Finplaza logo">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#111A2E"/>
+      <stop offset="1" stop-color="#0B1220"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#16C784"/>
+      <stop offset="1" stop-color="#1FE08F"/>
+    </linearGradient>
+    <clipPath id="archClip">
+      <path d="M124 300 V196 a132 132 0 0 1 264 0 V300 a18 18 0 0 1 -18 18 H142 a18 18 0 0 1 -18 -18 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="512" height="512" rx="104" fill="url(#bgGrad)"/>
+  <rect x="6" y="6" width="500" height="500" rx="98" fill="none" stroke="#16C784" stroke-opacity="0.18" stroke-width="2"/>
+
+  <!-- Abstract mark: plaza arch built from rising bars -->
+  <g clip-path="url(#archClip)">
+    <rect x="124" y="248" width="58" height="70" fill="url(#greenGrad)"/>
+    <rect x="190" y="200" width="58" height="118" fill="url(#greenGrad)"/>
+    <rect x="256" y="160" width="58" height="158" fill="#16C784"/>
+    <rect x="322" y="200" width="58" height="118" fill="url(#greenGrad)"/>
+    <!-- gold peak accent bar -->
+    <rect x="222" y="120" width="68" height="40" fill="#F6C544"/>
+  </g>
+
+  <!-- Arch outline to crisp the silhouette -->
+  <path d="M124 300 V196 a132 132 0 0 1 264 0 V300 a18 18 0 0 1 -18 18 H142 a18 18 0 0 1 -18 -18 Z"
+        fill="none" stroke="#1FE08F" stroke-opacity="0.55" stroke-width="3"/>
+
+  <!-- Base plaza line -->
+  <rect x="120" y="330" width="272" height="14" rx="7" fill="#F6C544"/>
+
+  <!-- Wordmark -->
+  <text x="256" y="422" text-anchor="middle"
+        font-family="Anton, Impact, sans-serif" font-size="92"
+        letter-spacing="1" fill="#F4F7FB">FIN<tspan fill="#16C784">PLAZA</tspan></text>
+
+  <!-- Handle / tagline -->
+  <text x="256" y="462" text-anchor="middle"
+        font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="600"
+        letter-spacing="6" fill="#9AA7BD">@FINPLAZA</text>
+</svg>

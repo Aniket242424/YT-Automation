@@ -1,0 +1,296 @@
+{
+  "name": "B — Produce (per approved topic)",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "b0000000-0000-0000-0000-000000000001",
+      "name": "When greenlit (job_id in)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [-700, 320],
+      "notes": "Called with { job_id }. Workflow A's greenlight reply (or the Telegram/Form injector) triggers this."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET status='scripted' WHERE id=$1\nRETURNING id, type, topic, angle, source_url;",
+        "options": { "queryReplacement": "={{ $json.job_id }}" }
+      },
+      "id": "b0000000-0000-0000-0000-000000000002",
+      "name": "Load + lock job",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [-480, 320],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 3000,\n  tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }],\n  messages: [{ role: 'user', content: `Research this topic for a factual Indian finance video: ${$json.topic} (${$json.angle}). Return JSON only: {facts:[{claim, source_url, source_date}], key_numbers:[{label,value,source_url}], caveats:[]}. Only include facts attributable to a NAMED source with a date. Prefer last 30 days. Respect the 3-month price-lag rule. No buy/sell framing.` }]\n}) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "b0000000-0000-0000-0000-000000000003",
+      "name": "Claude — research (web)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-260, 320],
+      "credentials": { "httpHeaderAuth": { "id": "ANTHROPIC_CRED", "name": "Anthropic x-api-key" } },
+      "notes": "Mirrors prompts/research.md. web_search tool gives Claude live sourcing."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Concatenate any text blocks Claude returned and parse the fact_pack JSON.\nconst blocks = ($json.content || []).filter(b => b.type === 'text').map(b => b.text).join('\\n');\nlet pack = { facts: [], key_numbers: [], caveats: [] };\ntry { pack = JSON.parse(blocks); } catch (e) {\n  const m = blocks.match(/\\{[\\s\\S]*\\}/); if (m) pack = JSON.parse(m[0]);\n}\nconst job = $('Load + lock job').first().json;\nreturn [{ json: { ...job, fact_pack: pack, sources: (pack.facts||[]).map(f => f.source_url).filter(Boolean) } }];"
+      },
+      "id": "b0000000-0000-0000-0000-000000000004",
+      "name": "Parse fact_pack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 3000,\n  system: 'COMPLIANCE (India, non-negotiable): Not SEBI-registered. Never say buy/sell/hold, target price, multibagger, guaranteed/assured returns, or predict any security price. Securities: concepts, mechanics, publicly disclosed facts, post-facto news only. Cards/banking: factual features, fees, eligibility + T&C apply. Crypto: include the ASCI disclaimer, news/education only. No forex trading/platform promotion. Flag any claim <90% sure with [VERIFY].',\n  messages: [{ role: 'user', content: `Write a ${$json.type === 'long' ? 'long-form (900-1400 words)' : 'Short (110-150 words)'} script. TOPIC: ${$json.topic}. ANGLE: ${$json.angle}. Use ONLY these verified facts: ${JSON.stringify($json.fact_pack)}. Output JSON only: {script, onscreen:[{t,type,text}], caption, disclaimers_needed:[]}.` }]\n}) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "b0000000-0000-0000-0000-000000000005",
+      "name": "Claude — script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [180, 320],
+      "credentials": { "httpHeaderAuth": { "id": "ANTHROPIC_CRED", "name": "Anthropic x-api-key" } },
+      "notes": "Compliance block in the system prompt. Mirrors prompts/script-shorts.md / script-long.md."
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.content?.[0]?.text ?? '{}';\nlet out = {};\ntry { out = JSON.parse(text); } catch (e) { const m = text.match(/\\{[\\s\\S]*\\}/); out = m ? JSON.parse(m[0]) : {}; }\nconst prev = $('Parse fact_pack').first().json;\nreturn [{ json: { ...prev, script: out.script || '', onscreen: out.onscreen || [], caption: out.caption || '', disclaimers_needed: out.disclaimers_needed || [] } }];"
+      },
+      "id": "b0000000-0000-0000-0000-000000000006",
+      "name": "Parse script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 2500,\n  system: 'You are a skeptical finance fact-checker. You do not trust the script. Catch errors and compliance breaks.',\n  messages: [{ role: 'user', content: `Given SCRIPT and SOURCES, for each factual claim output {claim, verdict: supported|unsupported|needs_review, note}. A claim is supported only if a provided source with a date backs it. Then COMPLIANCE_CHECK for any buy/sell view, target price, return prediction, forex promotion, or crypto claim missing the ASCI disclaimer. Return JSON only: {claims:[...], compliance:\"PASS|FAIL\", reasons:[]}.\\n\\nSCRIPT:\\n${$json.script}\\n\\nSOURCES:\\n${JSON.stringify($json.fact_pack)}` }]\n}) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "b0000000-0000-0000-0000-000000000007",
+      "name": "Claude — fact-check (fresh)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, 320],
+      "credentials": { "httpHeaderAuth": { "id": "ANTHROPIC_CRED", "name": "Anthropic x-api-key" } },
+      "notes": "FRESH context — no shared state with the writer. Mirrors prompts/factcheck.md."
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.content?.[0]?.text ?? '{}';\nlet fc = { compliance: 'FAIL', claims: [], reasons: ['unparseable'] };\ntry { fc = JSON.parse(text); } catch (e) { const m = text.match(/\\{[\\s\\S]*\\}/); if (m) fc = JSON.parse(m[0]); }\nconst bad = (fc.claims||[]).some(c => c.verdict === 'unsupported' || c.verdict === 'needs_review');\nconst pass = fc.compliance === 'PASS' && !bad;\nconst prev = $('Parse script').first().json;\nreturn [{ json: { ...prev, factcheck: pass ? 'PASS' : 'FLAG', flags: pass ? [] : (fc.reasons||[]).concat((fc.claims||[]).filter(c=>c.verdict!=='supported').map(c=>c.claim)), showCryptoDisclaimer: /crypto|bitcoin|nft|token/i.test(prev.script) } }];"
+      },
+      "id": "b0000000-0000-0000-0000-000000000008",
+      "name": "Evaluate gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "version": 2, "caseSensitive": true },
+          "combinator": "and",
+          "conditions": [
+            { "leftValue": "={{ $json.factcheck }}", "rightValue": "PASS", "operator": { "type": "string", "operation": "equals" } }
+          ]
+        }
+      },
+      "id": "b0000000-0000-0000-0000-000000000009",
+      "name": "Gate: PASS?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1060, 320]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET status='failed', factcheck='FLAG', flags=$2 WHERE id=$1;",
+        "options": { "queryReplacement": "={{ $json.id }},={{ JSON.stringify($json.flags) }}" }
+      },
+      "id": "b0000000-0000-0000-0000-000000000010",
+      "name": "Mark flagged",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1280, 480],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=⚠️ *Fact-check FLAG* — held for your call\n*Topic:* {{ $json.topic }}\n*Reasons:*\n{{ ($json.flags||[]).map(f => '• ' + f).join('\\n') }}\n\nNothing proceeds automatically. Edit the prompt/script or reject.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "b0000000-0000-0000-0000-000000000011",
+      "name": "Telegram — FLAG",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1500, 480],
+      "credentials": { "telegramApi": { "id": "TELEGRAM_CRED", "name": "Telegram bot" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $env.ELEVENLABS_VOICE_ID }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "xi-api-key", "value": "={{ $env.ELEVENLABS_API_KEY }}" },
+          { "name": "accept", "value": "audio/mpeg" },
+          { "name": "content-type", "value": "application/json" }
+        ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.script, model_id: $json.type === 'long' ? 'eleven_multilingual_v2' : 'eleven_flash_v2_5', voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.15 } }) }}",
+        "options": { "response": { "response": { "responseFormat": "file", "outputPropertyName": "audio" } } }
+      },
+      "id": "b0000000-0000-0000-0000-000000000012",
+      "name": "ElevenLabs — TTS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 200],
+      "notes": "flash for Shorts, multilingual_v2 for long. Returns MP3 binary on the 'audio' property."
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "={{ $env.ASSETS_BUCKET }}",
+        "fileName": "=audio/{{ $('Evaluate gate').item.json.id }}.mp3",
+        "binaryPropertyName": "audio",
+        "additionalFields": {}
+      },
+      "id": "b0000000-0000-0000-0000-000000000013",
+      "name": "S3 — put audio",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [1500, 200],
+      "credentials": { "aws": { "id": "AWS_CRED", "name": "AWS (IAM role / keys)" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RENDER_URL }}/render",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  template: $('Evaluate gate').item.json.type === 'long' ? 'LongForm' : 'Shorts',\n  jobId: $('Evaluate gate').item.json.id,\n  props: {\n    title: $('Evaluate gate').item.json.topic,\n    script: $('Evaluate gate').item.json.script,\n    audioUrl: `https://${$env.ASSETS_BUCKET}.s3.${$env.AWS_REGION}.amazonaws.com/audio/${$('Evaluate gate').item.json.id}.mp3`,\n    onscreen: $('Evaluate gate').item.json.onscreen,\n    showCryptoDisclaimer: $('Evaluate gate').item.json.showCryptoDisclaimer\n  }\n}) }}",
+        "options": { "timeout": 600000 }
+      },
+      "id": "b0000000-0000-0000-0000-000000000014",
+      "name": "Remotion — render",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1720, 200],
+      "notes": "Calls render/server.js. Long timeout — renders can take minutes."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-sonnet-4-6',\n  max_tokens: 1500,\n  messages: [{ role: 'user', content: `YouTube SEO. Given SCRIPT and FORMAT=${$('Evaluate gate').item.json.type}, return JSON only: {title(<=60 chars), description(includes \"Not investment advice; educational only.\" + affiliate disclosure), tags:[8-15], chapters:[{t,label}], hashtags:[]}.\\n\\nSCRIPT:\\n${$('Evaluate gate').item.json.script}` }]\n}) }}",
+        "options": {}
+      },
+      "id": "b0000000-0000-0000-0000-000000000015",
+      "name": "Claude — SEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1940, 200],
+      "credentials": { "httpHeaderAuth": { "id": "ANTHROPIC_CRED", "name": "Anthropic x-api-key" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET status='ready', factcheck='PASS', audio_url=$2, video_url=$3, thumb_url=$4, seo=$5 WHERE id=$1 RETURNING id;",
+        "options": { "queryReplacement": "={{ $('Evaluate gate').item.json.id }},={{ `https://${$env.ASSETS_BUCKET}.s3.${$env.AWS_REGION}.amazonaws.com/audio/${$('Evaluate gate').item.json.id}.mp3` }},={{ $('Remotion — render').item.json.video_url }},={{ $('Remotion — render').item.json.thumb_url }},={{ $json.content?.[0]?.text || '{}' }}"
+        }
+      },
+      "id": "b0000000-0000-0000-0000-000000000016",
+      "name": "Mark ready",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2160, 200],
+      "credentials": { "postgres": { "id": "PG_CRED", "name": "Postgres — n8n DB" } }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=✅ *Ready to review*\n*{{ $('Evaluate gate').item.json.topic }}*\n▶️ {{ $('Remotion — render').item.json.video_url }}\n\nWatch it end-to-end, then Approve to publish on the next slot.",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[ { text: '✅ Approve', callback_data: 'approve:' + $('Evaluate gate').item.json.id }, { text: '❌ Reject', callback_data: 'reject:' + $('Evaluate gate').item.json.id } ]] }) }}"
+        }
+      },
+      "id": "b0000000-0000-0000-0000-000000000017",
+      "name": "Telegram — preview + buttons",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2380, 200],
+      "credentials": { "telegramApi": { "id": "TELEGRAM_CRED", "name": "Telegram bot" } }
+    }
+  ],
+  "connections": {
+    "When greenlit (job_id in)": { "main": [[{ "node": "Load + lock job", "type": "main", "index": 0 }]] },
+    "Load + lock job": { "main": [[{ "node": "Claude — research (web)", "type": "main", "index": 0 }]] },
+    "Claude — research (web)": { "main": [[{ "node": "Parse fact_pack", "type": "main", "index": 0 }]] },
+    "Parse fact_pack": { "main": [[{ "node": "Claude — script", "type": "main", "index": 0 }]] },
+    "Claude — script": { "main": [[{ "node": "Parse script", "type": "main", "index": 0 }]] },
+    "Parse script": { "main": [[{ "node": "Claude — fact-check (fresh)", "type": "main", "index": 0 }]] },
+    "Claude — fact-check (fresh)": { "main": [[{ "node": "Evaluate gate", "type": "main", "index": 0 }]] },
+    "Evaluate gate": { "main": [[{ "node": "Gate: PASS?", "type": "main", "index": 0 }]] },
+    "Gate: PASS?": { "main": [
+      [{ "node": "ElevenLabs — TTS", "type": "main", "index": 0 }],
+      [{ "node": "Mark flagged", "type": "main", "index": 0 }]
+    ] },
+    "Mark flagged": { "main": [[{ "node": "Telegram — FLAG", "type": "main", "index": 0 }]] },
+    "ElevenLabs — TTS": { "main": [[{ "node": "S3 — put audio", "type": "main", "index": 0 }]] },
+    "S3 — put audio": { "main": [[{ "node": "Remotion — render", "type": "main", "index": 0 }]] },
+    "Remotion — render": { "main": [[{ "node": "Claude — SEO", "type": "main", "index": 0 }]] },
+    "Claude — SEO": { "main": [[{ "node": "Mark ready", "type": "main", "index": 0 }]] },
+    "Mark ready": { "main": [[{ "node": "Telegram — preview + buttons", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Kolkata" },
+  "active": false,
+  "tags": [{ "name": "finance-pipeline" }]
+}
