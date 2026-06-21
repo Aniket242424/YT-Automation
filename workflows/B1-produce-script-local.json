@@ -1,0 +1,76 @@
+{
+  "name": "B1 — Produce script (Gemini, local)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b1000000-0000-0000-0000-000000000001",
+      "name": "When clicking Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-520, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "1", "name": "topic", "value": "Credit card ka minimum payment trap", "type": "string" },
+            { "id": "2", "name": "angle", "value": "Minimum payment sirf bharne se debt kaise badhta hai", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b1000000-0000-0000-0000-000000000002",
+      "name": "Set topic",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-300, 300],
+      "notes": "Change topic/angle here to test any idea."
+    },
+    {
+      "parameters": {
+        "jsCode": "const topic = $json.topic;\nconst angle = $json.angle;\nconst prompt = `COMPLIANCE (India, non-negotiable): no buy/sell/hold, no target price, no multibagger, no guaranteed or assured returns, no return predictions on any security; education and post-facto news only; crypto needs the ASCI disclaimer; no forex promotion. Tu Finplaza ka head writer hai, ek BOLD energetic Indian personal-finance Shorts channel. Ek 35 se 45 second HINGLISH Shorts script likh (Roman-script Hindi mixed with English finance terms jaise credit card, EMI, cashback, interest). TOPIC: ${topic}. ANGLE: ${angle}. Hook pehli line mein, 3 second ke andar land ho. Numbers digits mein jaise ₹12,000 aur 4 percent. Sirf education, koi buy ya sell ya returns ki baat nahi. End mein soft CTA: follow kar weekly card breakdown ke liye. Output ONLY JSON with: script (the spoken VO in Hinglish Roman script, plain sentences, no stage directions), onscreen (array of objects, each with t = approx start seconds and text = a short punchy Hinglish caption or number to show), caption (a Hinglish YouTube Shorts caption with 3 to 5 hashtags), broll_keywords (an array of 4 to 6 SHORT English stock-footage search phrases that visually match this topic, e.g. credit card swipe, indian rupee cash, stressed person bills, online payment phone).`;\nreturn [{ json: { topic, angle, prompt } }];"
+      },
+      "id": "b1000000-0000-0000-0000-000000000003",
+      "name": "Build prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-80, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "content-type", "value": "application/json" } ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [ { parts: [ { text: $json.prompt } ] } ], generationConfig: { temperature: 0.85, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 }, responseMimeType: \"application/json\", responseSchema: { type: \"OBJECT\", properties: { script: { type: \"STRING\" }, onscreen: { type: \"ARRAY\", items: { type: \"OBJECT\", properties: { t: { type: \"NUMBER\" }, text: { type: \"STRING\" } } } }, caption: { type: \"STRING\" } }, required: [\"script\", \"onscreen\", \"caption\"] } } }) }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "b1000000-0000-0000-0000-000000000004",
+      "name": "Gemini — produce script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [160, 300],
+      "notes": "Structured JSON output (responseSchema) + thinkingBudget:0 so it never truncates."
+    },
+    {
+      "parameters": {
+        "jsCode": "const parts = ($json.candidates && $json.candidates[0] && $json.candidates[0].content && $json.candidates[0].content.parts) || [];\nconst text = parts.map(function (p) { return p.text; }).filter(Boolean).join('') || '{}';\nlet out = {};\ntry { out = JSON.parse(text); } catch (e) { const m = text.match(/\\{[\\s\\S]*\\}/); out = m ? JSON.parse(m[0]) : { raw: text }; }\nconst topic = $('Set topic').first().json.topic;\nreturn [{ json: Object.assign({ topic: topic }, out) }];"
+      },
+      "id": "b1000000-0000-0000-0000-000000000005",
+      "name": "Parse script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    }
+  ],
+  "connections": {
+    "When clicking Execute": { "main": [[{ "node": "Set topic", "type": "main", "index": 0 }]] },
+    "Set topic": { "main": [[{ "node": "Build prompt", "type": "main", "index": 0 }]] },
+    "Build prompt": { "main": [[{ "node": "Gemini — produce script", "type": "main", "index": 0 }]] },
+    "Gemini — produce script": { "main": [[{ "node": "Parse script", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}
