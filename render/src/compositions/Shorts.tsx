@@ -16,6 +16,7 @@ import { z } from "zod";
 import { BRAND } from "../brand";
 import { shortsProps } from "../lib/types";
 import { Captions } from "../components/Captions";
+import { KaraokeCaptions } from "../components/KaraokeCaptions";
 import { BigNumber } from "../components/BigNumber";
 import { LowerThird } from "../components/LowerThird";
 import { DisclaimerBar } from "../components/Disclaimer";
@@ -27,6 +28,7 @@ export const Shorts: React.FC<z.infer<typeof shortsProps>> = ({
   audioUrl,
   audioDurationInSeconds,
   onscreen,
+  captions,
   brollUrls,
   showCryptoDisclaimer,
 }) => {
@@ -65,7 +67,11 @@ export const Shorts: React.FC<z.infer<typeof shortsProps>> = ({
         </AbsoluteFill>
       </Sequence>
 
-      <Captions script={script} audioDurationInSeconds={audioDurationInSeconds} />
+      {captions && captions.length > 0 ? (
+        <KaraokeCaptions captions={captions} />
+      ) : (
+        <Captions script={script} audioDurationInSeconds={audioDurationInSeconds} />
+      )}
 
       {numbers.map((n, i) => (
         <Sequence

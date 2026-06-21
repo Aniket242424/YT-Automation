@@ -1,11 +1,597 @@
 {
   "title": "Credit card minimum payment trap",
-  "script": "Credit Card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Toh suno, yeh aapko debt ke daldal mein phansa sakta hai! Maan lo, aapka bill hai ₹30,000 aur minimum payment hai sirf ₹1,500. Lekin baaki ₹28,500 par high interest lagna shuru ho jaata hai. Debt kam hone ke bajaye, sirf interest badhta jaayega. Hamesha full outstanding amount pay karein. Minimum payment is a trap, not a solution! Finplaza ko follow karein!",
+  "script": "Credit Card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Toh suno, yeh aapko debt ke daldal mein phansa sakta hai! Maan lo, aapka bill hai 30,000 rupaye aur minimum payment hai sirf 1,500 rupaye. Lekin baaki 28,500 rupaye par high interest lagna shuru ho jaata hai. Toh debt kam hone ke bajaye, sirf interest badhta jaayega. Hamesha full outstanding amount pay karein. Minimum payment is a trap, not a solution! Finplaza ko follow karein!",
   "audioUrl": "finplaza-audio.wav",
-  "audioDurationInSeconds": 33.81,
+  "audioDurationInSeconds": 25.89,
+  "captions": [
+    {
+      "text": "Credit",
+      "startMs": 190,
+      "endMs": 410,
+      "timestampMs": 190,
+      "confidence": 1
+    },
+    {
+      "text": "Card",
+      "startMs": 190,
+      "endMs": 430,
+      "timestampMs": 190,
+      "confidence": 1
+    },
+    {
+      "text": "ka",
+      "startMs": 430,
+      "endMs": 710,
+      "timestampMs": 430,
+      "confidence": 1
+    },
+    {
+      "text": "minimum",
+      "startMs": 710,
+      "endMs": 1210,
+      "timestampMs": 710,
+      "confidence": 1
+    },
+    {
+      "text": "payment",
+      "startMs": 1210,
+      "endMs": 1730,
+      "timestampMs": 1210,
+      "confidence": 1
+    },
+    {
+      "text": "trap!",
+      "startMs": 1730,
+      "endMs": 2060,
+      "timestampMs": 1730,
+      "confidence": 1
+    },
+    {
+      "text": "Kya",
+      "startMs": 2060,
+      "endMs": 2210,
+      "timestampMs": 2060,
+      "confidence": 1
+    },
+    {
+      "text": "aap",
+      "startMs": 2210,
+      "endMs": 2430,
+      "timestampMs": 2210,
+      "confidence": 1
+    },
+    {
+      "text": "bhi",
+      "startMs": 2430,
+      "endMs": 2720,
+      "timestampMs": 2430,
+      "confidence": 1
+    },
+    {
+      "text": "har",
+      "startMs": 2720,
+      "endMs": 2940,
+      "timestampMs": 2720,
+      "confidence": 1
+    },
+    {
+      "text": "mahine",
+      "startMs": 2940,
+      "endMs": 3470,
+      "timestampMs": 2940,
+      "confidence": 1
+    },
+    {
+      "text": "sirf",
+      "startMs": 3470,
+      "endMs": 3900,
+      "timestampMs": 3470,
+      "confidence": 1
+    },
+    {
+      "text": "minimum",
+      "startMs": 3900,
+      "endMs": 4270,
+      "timestampMs": 3900,
+      "confidence": 1
+    },
+    {
+      "text": "amount",
+      "startMs": 4270,
+      "endMs": 4700,
+      "timestampMs": 4270,
+      "confidence": 1
+    },
+    {
+      "text": "pay",
+      "startMs": 4700,
+      "endMs": 4910,
+      "timestampMs": 4700,
+      "confidence": 1
+    },
+    {
+      "text": "karte",
+      "startMs": 4910,
+      "endMs": 5360,
+      "timestampMs": 4910,
+      "confidence": 1
+    },
+    {
+      "text": "ho?",
+      "startMs": 5360,
+      "endMs": 5560,
+      "timestampMs": 5360,
+      "confidence": 1
+    },
+    {
+      "text": "Toh",
+      "startMs": 5560,
+      "endMs": 5840,
+      "timestampMs": 5560,
+      "confidence": 1
+    },
+    {
+      "text": "suno,",
+      "startMs": 5840,
+      "endMs": 6080,
+      "timestampMs": 5840,
+      "confidence": 1
+    },
+    {
+      "text": "yeh",
+      "startMs": 6080,
+      "endMs": 6480,
+      "timestampMs": 6080,
+      "confidence": 1
+    },
+    {
+      "text": "aapko",
+      "startMs": 6480,
+      "endMs": 6830,
+      "timestampMs": 6480,
+      "confidence": 1
+    },
+    {
+      "text": "debt",
+      "startMs": 6830,
+      "endMs": 7620,
+      "timestampMs": 6830,
+      "confidence": 1
+    },
+    {
+      "text": "ke",
+      "startMs": 7620,
+      "endMs": 7810,
+      "timestampMs": 7620,
+      "confidence": 1
+    },
+    {
+      "text": "daldal",
+      "startMs": 7810,
+      "endMs": 8010,
+      "timestampMs": 7810,
+      "confidence": 1
+    },
+    {
+      "text": "mein",
+      "startMs": 8010,
+      "endMs": 8320,
+      "timestampMs": 8010,
+      "confidence": 1
+    },
+    {
+      "text": "phansa",
+      "startMs": 8320,
+      "endMs": 8520,
+      "timestampMs": 8320,
+      "confidence": 1
+    },
+    {
+      "text": "sakta",
+      "startMs": 8520,
+      "endMs": 8560,
+      "timestampMs": 8520,
+      "confidence": 1
+    },
+    {
+      "text": "hai!",
+      "startMs": 8560,
+      "endMs": 8780,
+      "timestampMs": 8560,
+      "confidence": 1
+    },
+    {
+      "text": "Maan",
+      "startMs": 8560,
+      "endMs": 8840,
+      "timestampMs": 8560,
+      "confidence": 1
+    },
+    {
+      "text": "lo,",
+      "startMs": 8840,
+      "endMs": 9290,
+      "timestampMs": 8840,
+      "confidence": 1
+    },
+    {
+      "text": "aapka",
+      "startMs": 9290,
+      "endMs": 9860,
+      "timestampMs": 9290,
+      "confidence": 1
+    },
+    {
+      "text": "bill",
+      "startMs": 9860,
+      "endMs": 10030,
+      "timestampMs": 9860,
+      "confidence": 1
+    },
+    {
+      "text": "hai",
+      "startMs": 10030,
+      "endMs": 10470,
+      "timestampMs": 10030,
+      "confidence": 1
+    },
+    {
+      "text": "30,000",
+      "startMs": 10470,
+      "endMs": 10830,
+      "timestampMs": 10470,
+      "confidence": 1
+    },
+    {
+      "text": "rupaye",
+      "startMs": 10830,
+      "endMs": 10940,
+      "timestampMs": 10830,
+      "confidence": 1
+    },
+    {
+      "text": "aur",
+      "startMs": 10940,
+      "endMs": 11180,
+      "timestampMs": 10940,
+      "confidence": 1
+    },
+    {
+      "text": "minimum",
+      "startMs": 11180,
+      "endMs": 11440,
+      "timestampMs": 11180,
+      "confidence": 1
+    },
+    {
+      "text": "payment",
+      "startMs": 11440,
+      "endMs": 12020,
+      "timestampMs": 11440,
+      "confidence": 1
+    },
+    {
+      "text": "hai",
+      "startMs": 12020,
+      "endMs": 12180,
+      "timestampMs": 12020,
+      "confidence": 1
+    },
+    {
+      "text": "sirf",
+      "startMs": 12180,
+      "endMs": 12440,
+      "timestampMs": 12180,
+      "confidence": 1
+    },
+    {
+      "text": "1,500",
+      "startMs": 12440,
+      "endMs": 12700,
+      "timestampMs": 12440,
+      "confidence": 1
+    },
+    {
+      "text": "rupaye.",
+      "startMs": 12700,
+      "endMs": 12990,
+      "timestampMs": 12700,
+      "confidence": 1
+    },
+    {
+      "text": "Lekin",
+      "startMs": 12990,
+      "endMs": 13670,
+      "timestampMs": 12990,
+      "confidence": 1
+    },
+    {
+      "text": "baaki",
+      "startMs": 13670,
+      "endMs": 13880,
+      "timestampMs": 13670,
+      "confidence": 1
+    },
+    {
+      "text": "28,500",
+      "startMs": 13880,
+      "endMs": 14450,
+      "timestampMs": 13880,
+      "confidence": 1
+    },
+    {
+      "text": "rupaye",
+      "startMs": 14450,
+      "endMs": 14470,
+      "timestampMs": 14450,
+      "confidence": 1
+    },
+    {
+      "text": "par",
+      "startMs": 14470,
+      "endMs": 14540,
+      "timestampMs": 14470,
+      "confidence": 1
+    },
+    {
+      "text": "high",
+      "startMs": 14540,
+      "endMs": 14590,
+      "timestampMs": 14540,
+      "confidence": 1
+    },
+    {
+      "text": "interest",
+      "startMs": 14590,
+      "endMs": 14790,
+      "timestampMs": 14590,
+      "confidence": 1
+    },
+    {
+      "text": "lagna",
+      "startMs": 14790,
+      "endMs": 15300,
+      "timestampMs": 14790,
+      "confidence": 1
+    },
+    {
+      "text": "shuru",
+      "startMs": 15300,
+      "endMs": 16340,
+      "timestampMs": 15300,
+      "confidence": 1
+    },
+    {
+      "text": "ho",
+      "startMs": 16340,
+      "endMs": 16600,
+      "timestampMs": 16340,
+      "confidence": 1
+    },
+    {
+      "text": "jaata",
+      "startMs": 16600,
+      "endMs": 17060,
+      "timestampMs": 16600,
+      "confidence": 1
+    },
+    {
+      "text": "hai.",
+      "startMs": 17060,
+      "endMs": 17190,
+      "timestampMs": 17060,
+      "confidence": 1
+    },
+    {
+      "text": "Toh",
+      "startMs": 17190,
+      "endMs": 17410,
+      "timestampMs": 17190,
+      "confidence": 1
+    },
+    {
+      "text": "debt",
+      "startMs": 17190,
+      "endMs": 17440,
+      "timestampMs": 17190,
+      "confidence": 1
+    },
+    {
+      "text": "kam",
+      "startMs": 17440,
+      "endMs": 17870,
+      "timestampMs": 17440,
+      "confidence": 1
+    },
+    {
+      "text": "hone",
+      "startMs": 17870,
+      "endMs": 17900,
+      "timestampMs": 17870,
+      "confidence": 1
+    },
+    {
+      "text": "ke",
+      "startMs": 17900,
+      "endMs": 18180,
+      "timestampMs": 17900,
+      "confidence": 1
+    },
+    {
+      "text": "bajaye,",
+      "startMs": 18180,
+      "endMs": 18380,
+      "timestampMs": 18180,
+      "confidence": 1
+    },
+    {
+      "text": "sirf",
+      "startMs": 18380,
+      "endMs": 18840,
+      "timestampMs": 18380,
+      "confidence": 1
+    },
+    {
+      "text": "interest",
+      "startMs": 18840,
+      "endMs": 19340,
+      "timestampMs": 18840,
+      "confidence": 1
+    },
+    {
+      "text": "badhta",
+      "startMs": 19340,
+      "endMs": 19730,
+      "timestampMs": 19340,
+      "confidence": 1
+    },
+    {
+      "text": "jaayega.",
+      "startMs": 19730,
+      "endMs": 20010,
+      "timestampMs": 19730,
+      "confidence": 1
+    },
+    {
+      "text": "Hamesha",
+      "startMs": 20010,
+      "endMs": 20210,
+      "timestampMs": 20010,
+      "confidence": 1
+    },
+    {
+      "text": "full",
+      "startMs": 20210,
+      "endMs": 20890,
+      "timestampMs": 20210,
+      "confidence": 1
+    },
+    {
+      "text": "outstanding",
+      "startMs": 20890,
+      "endMs": 21500,
+      "timestampMs": 20890,
+      "confidence": 1
+    },
+    {
+      "text": "amount",
+      "startMs": 21500,
+      "endMs": 21720,
+      "timestampMs": 21500,
+      "confidence": 1
+    },
+    {
+      "text": "pay",
+      "startMs": 21720,
+      "endMs": 21870,
+      "timestampMs": 21720,
+      "confidence": 1
+    },
+    {
+      "text": "karein.",
+      "startMs": 21870,
+      "endMs": 22020,
+      "timestampMs": 21870,
+      "confidence": 1
+    },
+    {
+      "text": "Minimum",
+      "startMs": 22020,
+      "endMs": 22540,
+      "timestampMs": 22020,
+      "confidence": 1
+    },
+    {
+      "text": "payment",
+      "startMs": 22540,
+      "endMs": 22690,
+      "timestampMs": 22540,
+      "confidence": 1
+    },
+    {
+      "text": "is",
+      "startMs": 22690,
+      "endMs": 22860,
+      "timestampMs": 22690,
+      "confidence": 1
+    },
+    {
+      "text": "a",
+      "startMs": 22860,
+      "endMs": 23290,
+      "timestampMs": 22860,
+      "confidence": 1
+    },
+    {
+      "text": "trap,",
+      "startMs": 23290,
+      "endMs": 23500,
+      "timestampMs": 23290,
+      "confidence": 1
+    },
+    {
+      "text": "not",
+      "startMs": 23500,
+      "endMs": 23580,
+      "timestampMs": 23500,
+      "confidence": 1
+    },
+    {
+      "text": "a",
+      "startMs": 23580,
+      "endMs": 24340,
+      "timestampMs": 23580,
+      "confidence": 1
+    },
+    {
+      "text": "solution!",
+      "startMs": 24340,
+      "endMs": 24730,
+      "timestampMs": 24340,
+      "confidence": 1
+    },
+    {
+      "text": "Finplaza",
+      "startMs": 24730,
+      "endMs": 24930,
+      "timestampMs": 24730,
+      "confidence": 1
+    },
+    {
+      "text": "ko",
+      "startMs": 24930,
+      "endMs": 25190,
+      "timestampMs": 24930,
+      "confidence": 1
+    },
+    {
+      "text": "follow",
+      "startMs": 25190,
+      "endMs": 25320,
+      "timestampMs": 25190,
+      "confidence": 1
+    },
+    {
+      "text": "karein!",
+      "startMs": 25320,
+      "endMs": 25890,
+      "timestampMs": 25320,
+      "confidence": 1
+    }
+  ],
   "onscreen": [
-    { "t": 7, "type": "number", "text": "₹30,000", "durationInSeconds": 1.8 },
-    { "t": 13, "type": "number", "text": "₹28,500", "durationInSeconds": 1.8 }
+    {
+      "t": 7,
+      "type": "number",
+      "text": "₹30,000",
+      "durationInSeconds": 1.8
+    },
+    {
+      "t": 13,
+      "type": "number",
+      "text": "₹28,500",
+      "durationInSeconds": 1.8
+    }
   ],
   "brollUrls": [],
   "showCryptoDisclaimer": false,

@@ -35,6 +35,18 @@ export const shortsProps = z.object({
   audioUrl: z.string().describe("S3/HTTPS url to the ElevenLabs MP3"),
   audioDurationInSeconds: z.number().default(40),
   onscreen: z.array(onscreenItem).default([]),
+  // word-level captions from Whisper (perfect sync); empty = fall back to even-timing
+  captions: z
+    .array(
+      z.object({
+        text: z.string(),
+        startMs: z.number(),
+        endMs: z.number(),
+        timestampMs: z.number().nullable().optional(),
+        confidence: z.number().nullable().optional(),
+      })
+    )
+    .default([]),
   brollUrls: z.array(z.string()).default([]),
   showCryptoDisclaimer: z.boolean().default(false),
   fps: z.number().default(30),
