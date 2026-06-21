@@ -9,8 +9,8 @@ const KEY = (env.match(/^GEMINI_API_KEY=(.*)$/m) || [])[1].trim();
 const PEXELS = (env.match(/^PEXELS_API_KEY=(.*)$/m) || [])[1].trim();
 
 // rotate across ALL Gemini keys (each project has its own TTS quota)
-const KEYS = [KEY, ...[2, 3, 4, 5, 6].map((i) => (env.match(new RegExp("^GEMINI_API_KEY_" + i + "=(.*)$", "m")) || [])[1]).filter(Boolean).map((s) => s.trim())];
-let keyIdx = 0;
+const KEYS = [KEY, ...[2, 3, 4, 5, 6, 7].map((i) => (env.match(new RegExp("^GEMINI_API_KEY_" + i + "=(.*)$", "m")) || [])[1]).filter(Boolean).map((s) => s.trim())];
+let curKey = 0; // fallback chain: stay on this key until it fails, then advance
 
 const keywords = ["credit card swipe", "stressed man money", "indian rupee cash", "online shopping payment phone", "calculator finance desk"];
 
@@ -31,6 +31,18 @@ const wavBuffer = (pcm) => {
 
 const silence = (ms) => Buffer.alloc(Math.round((ms / 1000) * BYTE_RATE));
 
+// trim leading/trailing silence from a clip so stitched phrases flow naturally
+function trimSilence(pcm, threshold = 450, padMs = 30) {
+  const arr = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length / 2);
+  let s = 0, e = arr.length;
+  while (s < e && Math.abs(arr[s]) < threshold) s++;
+  while (e > s && Math.abs(arr[e - 1]) < threshold) e--;
+  const pad = Math.round((padMs / 1000) * SR);
+  s = Math.max(0, s - pad);
+  e = Math.min(arr.length, e + pad);
+  return Buffer.from(arr.buffer, arr.byteOffset + s * 2, (e - s) * 2);
+}
+
 async function ttsOnce(text, key) {
   const r = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`,
@@ -45,13 +57,21 @@ async function ttsOnce(text, key) {
 // rotate keys + retry (each key has its own quota; preview TTS is occasionally flaky)
 async function tts(speak) {
   const styled = "Energetic Hinglish Indian finance host, clear and punchy: " + speak;
-  for (let attempt = 0; attempt < KEYS.length * 2 + 2; attempt++) {
-    const text = attempt < KEYS.length ? styled : speak; // styled first pass, raw after
-    const key = KEYS[keyIdx++ % KEYS.length];
-    try { const b = await ttsOnce(text, key); if (b && b.length > 1500) return b; } catch (e) {}
-    await new Promise((res) => setTimeout(res, 500));
+  // resilient: stay on the current key; on failure fall back to the next; loop all keys
+  // with growing backoff (handles per-minute resets) — never give up on one bad key.
+  for (let cycle = 0; cycle < 8; cycle++) {
+    for (let n = 0; n < KEYS.length; n++) {
+      const text = cycle === 0 ? styled : speak; // styled first, plain on retries
+      try {
+        const b = await ttsOnce(text, KEYS[curKey % KEYS.length]);
+        if (b && b.length > 1500) return b; // success → keep this key as the current one
+      } catch (e) {}
+      curKey++; // fall back to the next key
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    await new Promise((r) => setTimeout(r, 2500 * (cycle + 1))); // backoff, then loop keys again
   }
-  throw new Error("tts failed (all keys exhausted?): " + speak.slice(0, 50));
+  throw new Error("tts failed after looping all keys: " + speak.slice(0, 40));
 }
 
 // split into short phrases (sentence enders, then commas, then ~8-word chunks)
@@ -83,8 +103,8 @@ function phrases(text) {
   for (const phrase of phrases(script)) {
     const startMs = Math.round((pcm.length / BYTE_RATE) * 1000);
     const speak = phrase.replace(/₹(\d[\d,]*\d|\d)/g, "$1 rupaye"); // ₹ reads cleanly
-    const clip = await tts(speak);
-    pcm = Buffer.concat([pcm, clip, silence(140)]);
+    const clip = trimSilence(await tts(speak));
+    pcm = Buffer.concat([pcm, clip, silence(60)]);
     const endMs = Math.round((pcm.length / BYTE_RATE) * 1000);
 
     // distribute this phrase's words across its exact [startMs, endMs] by length
@@ -94,7 +114,7 @@ function phrases(text) {
     let acc = startMs;
     words.forEach((w, i) => {
       const ws = acc;
-      const we = acc + (weights[i] / total) * (endMs - startMs - 140);
+      const we = acc + (weights[i] / total) * (endMs - startMs - 60);
       captions.push({ text: w, startMs: Math.round(ws), endMs: Math.round(we), timestampMs: Math.round(ws), confidence: 1 });
       acc = we;
       const amt = w.match(/₹\d[\d,]*\d/);
