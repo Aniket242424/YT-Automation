@@ -9,6 +9,10 @@ const RENDER = __dirname;
 const WHISPER = path.join(os.homedir(), "finplaza-whisper");
 const env = fs.readFileSync(path.join(RENDER, "..", "infra", ".env"), "utf8");
 const KEY = (env.match(/^GEMINI_API_KEY=(.*)$/m) || [])[1].trim();
+const PEXELS = (env.match(/^PEXELS_API_KEY=(.*)$/m) || [])[1].trim();
+
+// b-roll search terms for this topic (Gemini generates these per video in the full pipeline)
+const keywords = ["credit card swipe", "stressed man money", "indian rupee cash", "online shopping payment phone", "calculator finance desk"];
 
 const script =
   "Credit Card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Toh suno, yeh aapko debt ke daldal mein phansa sakta hai! Maan lo, aapka bill hai 30,000 rupaye aur minimum payment hai sirf 1,500 rupaye. Lekin baaki 28,500 rupaye par high interest lagna shuru ho jaata hai. Toh debt kam hone ke bajaye, sirf interest badhta jaayega. Hamesha full outstanding amount pay karein. Minimum payment is a trap, not a solution! Finplaza ko follow karein!";
@@ -94,7 +98,30 @@ const resample = (pcm, fromRate, toRate) => {
     captions[k].confidence = 1;
   }
 
-  // 5. write props for the render
+  // 5. fetch + download topic-matched b-roll from Pexels (free)
+  const brollUrls = [];
+  for (let i = 0; i < keywords.length; i++) {
+    try {
+      const sr = await fetch(
+        "https://api.pexels.com/videos/search?query=" + encodeURIComponent(keywords[i]) + "&orientation=portrait&per_page=6&size=medium",
+        { headers: { Authorization: PEXELS } }
+      );
+      const sj = await sr.json();
+      const v = (sj.videos || []).find((x) => (x.video_files || []).some((f) => f.height > f.width));
+      if (!v) continue;
+      const file = v.video_files
+        .filter((f) => f.height > f.width)
+        .sort((a, b) => Math.abs(a.height - 1280) - Math.abs(b.height - 1280))[0];
+      const buf = Buffer.from(await (await fetch(file.link)).arrayBuffer());
+      const name = "broll-" + i + ".mp4";
+      fs.writeFileSync(path.join(RENDER, "public", name), buf);
+      brollUrls.push(name);
+    } catch (e) {
+      console.error("broll fail:", keywords[i], e.message);
+    }
+  }
+
+  // 6. write props for the render
   const props = {
     title: "Credit card minimum payment trap",
     script,
@@ -102,10 +129,10 @@ const resample = (pcm, fromRate, toRate) => {
     audioDurationInSeconds: seconds,
     captions,
     onscreen,
-    brollUrls: [],
+    brollUrls,
     showCryptoDisclaimer: false,
     fps: 30,
   };
   fs.writeFileSync(path.join(RENDER, "props.json"), JSON.stringify(props, null, 2));
-  console.log("PREPARED seconds=" + seconds + " words=" + captions.length);
+  console.log("PREPARED seconds=" + seconds + " words=" + captions.length + " broll=" + brollUrls.length);
 })().catch((e) => { console.error("PREPARE_FAILED:", e && e.message ? e.message : e); process.exit(1); });

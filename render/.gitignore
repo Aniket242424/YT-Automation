@@ -2,6 +2,7 @@ out/
 public/*.png
 public/*.wav
 public/*.mp3
+public/*.mp4
 !public/.gitkeep
 # generated render artifacts
 props.json

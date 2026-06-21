@@ -8,22 +8,22 @@ import {
   useVideoConfig,
   useCurrentFrame,
   interpolate,
+  spring,
 } from "remotion";
-
-// local files (in public/) come in as bare names; S3/https come in as URLs
-const src = (u: string) => (/^https?:|^data:/.test(u) ? u : staticFile(u));
 import { z } from "zod";
 import { BRAND } from "../brand";
 import { shortsProps } from "../lib/types";
 import { Captions } from "../components/Captions";
 import { KaraokeCaptions } from "../components/KaraokeCaptions";
 import { BigNumber } from "../components/BigNumber";
-import { LowerThird } from "../components/LowerThird";
 import { DisclaimerBar } from "../components/Disclaimer";
+import { AnimatedBackground } from "../components/AnimatedBackground";
+import { CreditCard } from "../components/CreditCard";
 
-// Shorts 1080x1920: b-roll layer -> captions -> number call-outs -> brand strip.
+// local public/ files come as bare names; S3/https come as URLs
+const src = (u: string) => (/^https?:|^data:/.test(u) ? u : staticFile(u));
+
 export const Shorts: React.FC<z.infer<typeof shortsProps>> = ({
-  title,
   script,
   audioUrl,
   audioDurationInSeconds,
@@ -33,59 +33,68 @@ export const Shorts: React.FC<z.infer<typeof shortsProps>> = ({
   showCryptoDisclaimer,
 }) => {
   const { fps, durationInFrames } = useVideoConfig();
+  const frame = useCurrentFrame();
+  const t = frame / fps;
   const numbers = onscreen.filter((o) => o.type === "number");
+  const danger = t >= 12.5 && t <= 19.5; // the "interest / debt trap" beat
 
   return (
     <AbsoluteFill style={{ backgroundColor: BRAND.colors.bg }}>
-      {/* b-roll layer (Pexels free clips); falls back to the brand gradient */}
-      {brollUrls.length > 0 ? (
-        <Broll urls={brollUrls} totalFrames={durationInFrames} />
-      ) : (
-        <Gradient />
-      )}
-
-      {/* darken so captions stay legible over busy footage */}
-      <AbsoluteFill style={{ background: "rgba(8,12,22,0.35)" }} />
+      {brollUrls.length > 0 ? <Broll urls={brollUrls} totalFrames={durationInFrames} /> : <AnimatedBackground />}
 
       <Audio src={src(audioUrl)} />
 
-      {/* title card for the first 1.2s as a hook framer */}
-      <Sequence durationInFrames={Math.round(1.2 * fps)}>
-        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", padding: 80 }}>
-          <span
-            style={{
-              fontFamily: BRAND.fonts.display,
-              fontWeight: 900,
-              fontSize: 92,
-              color: BRAND.colors.text,
-              textAlign: "center",
-              lineHeight: 1.05,
-            }}
-          >
-            {title}
-          </span>
-        </AbsoluteFill>
+      {/* hero visual: real b-roll if we have it, else the branded credit card */}
+      {brollUrls.length === 0 ? <CreditCard top={360} danger={danger} /> : null}
+
+      {/* hook stamp, first ~2.2s */}
+      <Sequence durationInFrames={Math.round(2.2 * fps)}>
+        <HookStamp />
       </Sequence>
 
+      {/* punchy number slams */}
+      {numbers.map((n, i) => (
+        <Sequence
+          key={i}
+          from={Math.round(n.t * fps)}
+          durationInFrames={Math.round((n.durationInSeconds ?? 1.8) * fps)}
+        >
+          <BigNumber value={n.text} danger={n.t >= 12 && n.t <= 19} />
+        </Sequence>
+      ))}
+
+      {/* synced captions */}
       {captions && captions.length > 0 ? (
         <KaraokeCaptions captions={captions} />
       ) : (
         <Captions script={script} audioDurationInSeconds={audioDurationInSeconds} />
       )}
 
-      {numbers.map((n, i) => (
-        <Sequence
-          key={i}
-          from={Math.round(n.t * fps)}
-          durationInFrames={Math.round((n.durationInSeconds ?? 1.6) * fps)}
-        >
-          <BigNumber value={n.text} />
-        </Sequence>
-      ))}
-
-      <LowerThird text={BRAND.name} sub={BRAND.handle} />
-
       {showCryptoDisclaimer ? <DisclaimerBar crypto /> : <DisclaimerBar />}
+    </AbsoluteFill>
+  );
+};
+
+const HookStamp: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const enter = spring({ frame, fps, config: { damping: 10, mass: 0.6 } });
+  const rot = interpolate(enter, [0, 1], [-9, -4]);
+  return (
+    <AbsoluteFill style={{ alignItems: "center", justifyContent: "flex-start", paddingTop: 840 }}>
+      <div
+        style={{
+          transform: `scale(${enter}) rotate(${rot}deg)`,
+          background: BRAND.colors.danger,
+          padding: "8px 30px",
+          borderRadius: 16,
+          boxShadow: `0 14px 44px ${BRAND.colors.danger}99`,
+        }}
+      >
+        <span style={{ fontFamily: BRAND.fonts.display, fontSize: 92, color: "#fff", letterSpacing: 1 }}>
+          TRAP!
+        </span>
+      </div>
     </AbsoluteFill>
   );
 };
@@ -99,18 +108,8 @@ const Broll: React.FC<{ urls: string[]; totalFrames: number }> = ({ urls, totalF
           <OffthreadVideo src={src(u)} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </Sequence>
       ))}
+      {/* darken footage so captions stay readable */}
+      <AbsoluteFill style={{ background: "rgba(8,12,22,0.5)" }} />
     </>
-  );
-};
-
-const Gradient: React.FC = () => {
-  const frame = useCurrentFrame();
-  const shift = interpolate(frame, [0, 300], [0, 30]);
-  return (
-    <AbsoluteFill
-      style={{
-        background: `radial-gradient(120% 80% at 50% ${20 + shift}%, ${BRAND.colors.bgAlt}, ${BRAND.colors.bg})`,
-      }}
-    />
   );
 };
