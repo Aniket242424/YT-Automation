@@ -1,5 +1,5 @@
 {
-  "name": "B2 — Voice (ElevenLabs TTS, local)",
+  "name": "B2 — Voice (Gemini TTS, free, local)",
   "nodes": [
     {
       "parameters": {},
@@ -7,7 +7,7 @@
       "name": "When clicking Execute",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [-520, 300]
+      "position": [-540, 300]
     },
     {
       "parameters": {
@@ -22,37 +22,42 @@
       "name": "Set script",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [-300, 300],
-      "notes": "Short test line (saves free credits). Later this comes from B1's output."
+      "position": [-320, 300],
+      "notes": "Short test line (later this comes from B1's output)."
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $env.ELEVENLABS_VOICE_ID }}",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key={{ $env.GEMINI_API_KEY }}",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "xi-api-key", "value": "={{ $env.ELEVENLABS_API_KEY }}" },
-            { "name": "accept", "value": "audio/mpeg" },
-            { "name": "content-type", "value": "application/json" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "content-type", "value": "application/json" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ text: $json.script, model_id: \"eleven_multilingual_v2\", voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.15, use_speaker_boost: true } }) }}",
-        "options": { "response": { "response": { "responseFormat": "file", "outputPropertyName": "audio" } }, "timeout": 120000 }
+        "jsonBody": "={{ JSON.stringify({ contents: [ { parts: [ { text: 'Say in an energetic, friendly Indian voice: ' + $json.script } ] } ], generationConfig: { responseModalities: [\"AUDIO\"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: \"Kore\" } } } } }) }}",
+        "options": { "timeout": 120000 }
       },
       "id": "b2000000-0000-0000-0000-000000000003",
-      "name": "ElevenLabs — TTS",
+      "name": "Gemini — TTS",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-60, 300],
-      "notes": "Returns MP3 on the 'audio' binary property — playable right in the n8n output panel."
+      "position": [-100, 300],
+      "notes": "Free TTS via your Gemini key. voiceName options: Kore, Puck, Charon, Aoede, Fenrir... change to taste."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gemini returns raw 24kHz mono 16-bit PCM (base64). Wrap it in a WAV header so it plays.\nconst parts = ($json.candidates && $json.candidates[0] && $json.candidates[0].content && $json.candidates[0].content.parts) || [];\nconst part = parts.find(function (p) { return p.inlineData; });\nif (!part) { return [{ json: { error: 'no audio returned', raw: JSON.stringify($json).slice(0, 400) } }]; }\nconst pcm = Buffer.from(part.inlineData.data, 'base64');\nconst sampleRate = 24000, channels = 1, bits = 16;\nconst byteRate = sampleRate * channels * bits / 8;\nconst blockAlign = channels * bits / 8;\nconst h = Buffer.alloc(44);\nh.write('RIFF', 0); h.writeUInt32LE(36 + pcm.length, 4); h.write('WAVE', 8);\nh.write('fmt ', 12); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(channels, 22);\nh.writeUInt32LE(sampleRate, 24); h.writeUInt32LE(byteRate, 28); h.writeUInt16LE(blockAlign, 32); h.writeUInt16LE(bits, 34);\nh.write('data', 36); h.writeUInt32LE(pcm.length, 40);\nconst wav = Buffer.concat([h, pcm]);\nreturn [{ json: { seconds: Math.round(pcm.length / byteRate * 10) / 10 }, binary: { audio: { data: wav.toString('base64'), mimeType: 'audio/wav', fileName: 'finplaza-voice.wav', fileExtension: 'wav' } } }];"
+      },
+      "id": "b2000000-0000-0000-0000-000000000004",
+      "name": "PCM to WAV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [120, 300]
     }
   ],
   "connections": {
     "When clicking Execute": { "main": [[{ "node": "Set script", "type": "main", "index": 0 }]] },
-    "Set script": { "main": [[{ "node": "ElevenLabs — TTS", "type": "main", "index": 0 }]] }
+    "Set script": { "main": [[{ "node": "Gemini — TTS", "type": "main", "index": 0 }]] },
+    "Gemini — TTS": { "main": [[{ "node": "PCM to WAV", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" },
   "active": false
