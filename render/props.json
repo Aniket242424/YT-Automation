@@ -1,0 +1,13 @@
+{
+  "title": "Credit card minimum payment trap",
+  "script": "Credit Card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Toh suno, yeh aapko debt ke daldal mein phansa sakta hai! Maan lo, aapka bill hai ₹30,000 aur minimum payment hai sirf ₹1,500. Lekin baaki ₹28,500 par high interest lagna shuru ho jaata hai. Debt kam hone ke bajaye, sirf interest badhta jaayega. Hamesha full outstanding amount pay karein. Minimum payment is a trap, not a solution! Finplaza ko follow karein!",
+  "audioUrl": "finplaza-audio.wav",
+  "audioDurationInSeconds": 33.81,
+  "onscreen": [
+    { "t": 7, "type": "number", "text": "₹30,000", "durationInSeconds": 1.8 },
+    { "t": 13, "type": "number", "text": "₹28,500", "durationInSeconds": 1.8 }
+  ],
+  "brollUrls": [],
+  "showCryptoDisclaimer": false,
+  "fps": 30
+}

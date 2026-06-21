@@ -1,3 +1,5 @@
 out/
 public/*.png
+public/*.wav
+public/*.mp3
 !public/.gitkeep

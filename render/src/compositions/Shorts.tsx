@@ -4,10 +4,14 @@ import {
   Audio,
   OffthreadVideo,
   Sequence,
+  staticFile,
   useVideoConfig,
   useCurrentFrame,
   interpolate,
 } from "remotion";
+
+// local files (in public/) come in as bare names; S3/https come in as URLs
+const src = (u: string) => (/^https?:|^data:/.test(u) ? u : staticFile(u));
 import { z } from "zod";
 import { BRAND } from "../brand";
 import { shortsProps } from "../lib/types";
@@ -41,7 +45,7 @@ export const Shorts: React.FC<z.infer<typeof shortsProps>> = ({
       {/* darken so captions stay legible over busy footage */}
       <AbsoluteFill style={{ background: "rgba(8,12,22,0.35)" }} />
 
-      <Audio src={audioUrl} />
+      <Audio src={src(audioUrl)} />
 
       {/* title card for the first 1.2s as a hook framer */}
       <Sequence durationInFrames={Math.round(1.2 * fps)}>
@@ -86,7 +90,7 @@ const Broll: React.FC<{ urls: string[]; totalFrames: number }> = ({ urls, totalF
     <>
       {urls.map((u, i) => (
         <Sequence key={i} from={i * per} durationInFrames={per}>
-          <OffthreadVideo src={u} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <OffthreadVideo src={src(u)} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </Sequence>
       ))}
     </>
