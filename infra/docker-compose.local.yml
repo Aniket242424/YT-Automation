@@ -46,7 +46,10 @@ services:
       # AI brain keys — read from infra/.env (git-ignored). Referenced in nodes as {{ $env.* }}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_API_KEY_2: ${GEMINI_API_KEY_2:-}
+      GEMINI_API_KEY_3: ${GEMINI_API_KEY_3:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
