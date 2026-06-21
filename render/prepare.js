@@ -1,138 +1,128 @@
-// Local "produce media" step: Gemini TTS (Charon) -> WAV, Whisper -> word-level
-// captions, then write props.json for the render. All free, all local.
+// Local "produce media": phrase-by-phrase Gemini TTS (Charon) so caption timing is
+// EXACT, auto-timed number slams where amounts are spoken, + Pexels topic b-roll. Free.
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
-const { transcribe, toCaptions } = require("@remotion/install-whisper-cpp");
 
 const RENDER = __dirname;
-const WHISPER = path.join(os.homedir(), "finplaza-whisper");
 const env = fs.readFileSync(path.join(RENDER, "..", "infra", ".env"), "utf8");
 const KEY = (env.match(/^GEMINI_API_KEY=(.*)$/m) || [])[1].trim();
 const PEXELS = (env.match(/^PEXELS_API_KEY=(.*)$/m) || [])[1].trim();
 
-// b-roll search terms for this topic (Gemini generates these per video in the full pipeline)
+// rotate across ALL Gemini keys (each project has its own TTS quota)
+const KEYS = [KEY, ...[2, 3, 4, 5, 6].map((i) => (env.match(new RegExp("^GEMINI_API_KEY_" + i + "=(.*)$", "m")) || [])[1]).filter(Boolean).map((s) => s.trim())];
+let keyIdx = 0;
+
 const keywords = ["credit card swipe", "stressed man money", "indian rupee cash", "online shopping payment phone", "calculator finance desk"];
 
 const script =
-  "Credit Card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Toh suno, yeh aapko debt ke daldal mein phansa sakta hai! Maan lo, aapka bill hai 30,000 rupaye aur minimum payment hai sirf 1,500 rupaye. Lekin baaki 28,500 rupaye par high interest lagna shuru ho jaata hai. Toh debt kam hone ke bajaye, sirf interest badhta jaayega. Hamesha full outstanding amount pay karein. Minimum payment is a trap, not a solution! Finplaza ko follow karein!";
+  "Credit card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Ye aapko debt ke daldal mein phasa sakta hai. Maan lo aapka bill hai ₹30,000, aur minimum payment sirf ₹1,500. Aapko lagta hai payment ho gayi. Lekin baaki ₹28,500 par high interest lagna shuru ho jaata hai. Debt kam hone ke bajaye, interest badhta jaata hai. Isliye hamesha full outstanding pay karo. Minimum payment is a trap, not a solution! Finplaza ko follow karo!";
 
-const onscreen = [
-  { t: 7, type: "number", text: "₹30,000", durationInSeconds: 1.8 },
-  { t: 13, type: "number", text: "₹28,500", durationInSeconds: 1.8 },
-];
+const SR = 24000;
+const BYTE_RATE = SR * 2; // mono 16-bit
 
-const wavBuffer = (pcm, sampleRate) => {
-  const ch = 1, bits = 16, byteRate = sampleRate * ch * bits / 8, blockAlign = ch * bits / 8;
+const wavBuffer = (pcm) => {
   const h = Buffer.alloc(44);
   h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8);
-  h.write("fmt ", 12); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(ch, 22);
-  h.writeUInt32LE(sampleRate, 24); h.writeUInt32LE(byteRate, 28); h.writeUInt16LE(blockAlign, 32); h.writeUInt16LE(bits, 34);
+  h.write("fmt ", 12); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22);
+  h.writeUInt32LE(SR, 24); h.writeUInt32LE(BYTE_RATE, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34);
   h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
   return Buffer.concat([h, pcm]);
 };
 
-const resample = (pcm, fromRate, toRate) => {
-  const n = pcm.length / 2;
-  const inArr = new Int16Array(pcm.buffer, pcm.byteOffset, n);
-  const out = Math.floor((n * toRate) / fromRate);
-  const o = new Int16Array(out);
-  const step = fromRate / toRate;
-  for (let j = 0; j < out; j++) {
-    const pos = j * step, i0 = Math.floor(pos), i1 = Math.min(i0 + 1, n - 1), f = pos - i0;
-    o[j] = (inArr[i0] * (1 - f) + inArr[i1] * f) | 0;
-  }
-  return Buffer.from(o.buffer, o.byteOffset, o.byteLength);
-};
+const silence = (ms) => Buffer.alloc(Math.round((ms / 1000) * BYTE_RATE));
 
-(async () => {
-  // 1. Gemini TTS -> 24kHz PCM
-  const text =
-    "Read this Hinglish YouTube Short script as an energetic, friendly Indian finance host. Vary your pace: say rupee amounts and key numbers slowly and clearly, deliver short punchy lines fast and lively, and pause a beat before the big reveal. Script: " +
-    script;
+async function ttsOnce(text, key) {
   const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`,
     { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Charon" } } } } }) }
   );
+  if (r.status === 429) return null; // quota on this key; rotate
   const j = await r.json();
   const part = (j.candidates?.[0]?.content?.parts || []).find((p) => p.inlineData);
-  if (!part) { console.error("NO AUDIO:", JSON.stringify(j).slice(0, 400)); process.exit(1); }
-  const pcm24 = Buffer.from(part.inlineData.data, "base64");
-  const seconds = +(pcm24.length / 48000).toFixed(2);
+  return part ? Buffer.from(part.inlineData.data, "base64") : null;
+}
 
-  // 2. save 24kHz WAV for the video
-  fs.mkdirSync(path.join(RENDER, "public"), { recursive: true });
-  fs.writeFileSync(path.join(RENDER, "public", "finplaza-audio.wav"), wavBuffer(pcm24, 24000));
+// rotate keys + retry (each key has its own quota; preview TTS is occasionally flaky)
+async function tts(speak) {
+  const styled = "Energetic Hinglish Indian finance host, clear and punchy: " + speak;
+  for (let attempt = 0; attempt < KEYS.length * 2 + 2; attempt++) {
+    const text = attempt < KEYS.length ? styled : speak; // styled first pass, raw after
+    const key = KEYS[keyIdx++ % KEYS.length];
+    try { const b = await ttsOnce(text, key); if (b && b.length > 1500) return b; } catch (e) {}
+    await new Promise((res) => setTimeout(res, 500));
+  }
+  throw new Error("tts failed (all keys exhausted?): " + speak.slice(0, 50));
+}
 
-  // 3. 16kHz copy in a SPACE-FREE folder for whisper.cpp (path-spaces break it)
-  const wav16 = path.join(WHISPER, "finplaza-16k.wav");
-  fs.writeFileSync(wav16, wavBuffer(resample(pcm24, 24000, 16000), 16000));
+// split into short phrases (sentence enders, then commas, then ~8-word chunks)
+// build coherent 5-10 word chunks: break at clause ends (. ! ? ,) with >=5 words,
+// or at 10 words; never leave a tiny fragment (TTS rejects those).
+function phrases(text) {
+  const words = text.split(/\s+/);
+  const out = [];
+  let buf = [];
+  for (const w of words) {
+    buf.push(w);
+    if ((/[.!?,]$/.test(w) && buf.length >= 9) || buf.length >= 14) {
+      out.push(buf.join(" "));
+      buf = [];
+    }
+  }
+  if (buf.length) {
+    if (buf.length < 4 && out.length) out[out.length - 1] += " " + buf.join(" ");
+    else out.push(buf.join(" "));
+  }
+  return out;
+}
 
-  // 4. transcribe -> word-level captions
-  const out = await transcribe({
-    inputPath: wav16,
-    whisperPath: WHISPER,
-    whisperCppVersion: "1.5.5",
-    model: "base",
-    modelFolder: WHISPER,
-    tokenLevelTimestamps: true,
-    language: "en",
-  });
-  const { captions: raw } = toCaptions({ whisperCppOutput: out });
+(async () => {
+  let pcm = Buffer.alloc(0);
+  const captions = [];
+  const onscreen = [];
 
-  // Whisper mis-hears Hinglish (it leans English), but its WORD TIMINGS track the real
-  // speech rhythm (pauses, fast/slow). Force-align: keep the EXACT script words, map them
-  // onto Whisper's timing so captions match both the voice AND the words.
-  const wWords = raw.filter((c) => /[A-Za-z0-9]/.test(c.text));
-  const sWords = script.replace(/\s+/g, " ").trim().split(" ");
-  const totalMs = Math.round(seconds * 1000);
-  const captions = sWords.map((w, j) => {
-    const wi = Math.min(wWords.length - 1, Math.floor((j * wWords.length) / sWords.length));
-    const startMs = wWords[wi] ? wWords[wi].startMs : Math.round((j / sWords.length) * totalMs);
-    return { text: w, startMs };
-  });
-  for (let k = 0; k < captions.length; k++) {
-    const next = k + 1 < captions.length ? captions[k + 1].startMs : totalMs;
-    captions[k].endMs = next > captions[k].startMs ? next : captions[k].startMs + 220;
-    captions[k].timestampMs = captions[k].startMs;
-    captions[k].confidence = 1;
+  for (const phrase of phrases(script)) {
+    const startMs = Math.round((pcm.length / BYTE_RATE) * 1000);
+    const speak = phrase.replace(/₹(\d[\d,]*\d|\d)/g, "$1 rupaye"); // ₹ reads cleanly
+    const clip = await tts(speak);
+    pcm = Buffer.concat([pcm, clip, silence(140)]);
+    const endMs = Math.round((pcm.length / BYTE_RATE) * 1000);
+
+    // distribute this phrase's words across its exact [startMs, endMs] by length
+    const words = phrase.split(/\s+/);
+    const weights = words.map((w) => w.length + 2);
+    const total = weights.reduce((a, b) => a + b, 0);
+    let acc = startMs;
+    words.forEach((w, i) => {
+      const ws = acc;
+      const we = acc + (weights[i] / total) * (endMs - startMs - 140);
+      captions.push({ text: w, startMs: Math.round(ws), endMs: Math.round(we), timestampMs: Math.round(ws), confidence: 1 });
+      acc = we;
+      const amt = w.match(/₹\d[\d,]*\d/);
+      if (amt) onscreen.push({ t: ws / 1000, type: "number", text: amt[0], durationInSeconds: 1.7 });
+    });
   }
 
-  // 5. fetch + download topic-matched b-roll from Pexels (free)
+  const seconds = +(pcm.length / BYTE_RATE).toFixed(2);
+  fs.mkdirSync(path.join(RENDER, "public"), { recursive: true });
+  fs.writeFileSync(path.join(RENDER, "public", "finplaza-audio.wav"), wavBuffer(pcm));
+
+  // topic b-roll from Pexels
   const brollUrls = [];
   for (let i = 0; i < keywords.length; i++) {
     try {
-      const sr = await fetch(
-        "https://api.pexels.com/videos/search?query=" + encodeURIComponent(keywords[i]) + "&orientation=portrait&per_page=6&size=medium",
-        { headers: { Authorization: PEXELS } }
-      );
-      const sj = await sr.json();
+      const sj = await (await fetch("https://api.pexels.com/videos/search?query=" + encodeURIComponent(keywords[i]) + "&orientation=portrait&per_page=6&size=medium", { headers: { Authorization: PEXELS } })).json();
       const v = (sj.videos || []).find((x) => (x.video_files || []).some((f) => f.height > f.width));
       if (!v) continue;
-      const file = v.video_files
-        .filter((f) => f.height > f.width)
-        .sort((a, b) => Math.abs(a.height - 1280) - Math.abs(b.height - 1280))[0];
-      const buf = Buffer.from(await (await fetch(file.link)).arrayBuffer());
-      const name = "broll-" + i + ".mp4";
-      fs.writeFileSync(path.join(RENDER, "public", name), buf);
-      brollUrls.push(name);
-    } catch (e) {
-      console.error("broll fail:", keywords[i], e.message);
-    }
+      const file = v.video_files.filter((f) => f.height > f.width).sort((a, b) => Math.abs(a.height - 1280) - Math.abs(b.height - 1280))[0];
+      fs.writeFileSync(path.join(RENDER, "public", "broll-" + i + ".mp4"), Buffer.from(await (await fetch(file.link)).arrayBuffer()));
+      brollUrls.push("broll-" + i + ".mp4");
+    } catch (e) { console.error("broll fail:", keywords[i], e.message); }
   }
 
-  // 6. write props for the render
-  const props = {
+  fs.writeFileSync(path.join(RENDER, "props.json"), JSON.stringify({
     title: "Credit card minimum payment trap",
-    script,
-    audioUrl: "finplaza-audio.wav",
-    audioDurationInSeconds: seconds,
-    captions,
-    onscreen,
-    brollUrls,
-    showCryptoDisclaimer: false,
-    fps: 30,
-  };
-  fs.writeFileSync(path.join(RENDER, "props.json"), JSON.stringify(props, null, 2));
-  console.log("PREPARED seconds=" + seconds + " words=" + captions.length + " broll=" + brollUrls.length);
+    script, audioUrl: "finplaza-audio.wav", audioDurationInSeconds: seconds,
+    captions, onscreen, brollUrls, showCryptoDisclaimer: false, fps: 30,
+  }, null, 2));
+  console.log("PREPARED seconds=" + seconds + " words=" + captions.length + " numbers=" + onscreen.length + " broll=" + brollUrls.length);
 })().catch((e) => { console.error("PREPARE_FAILED:", e && e.message ? e.message : e); process.exit(1); });
