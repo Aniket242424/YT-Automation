@@ -13,7 +13,8 @@
       "parameters": {
         "assignments": {
           "assignments": [
-            { "id": "1", "name": "script", "value": "Credit card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Maan lo bill hai ₹30,000 aur minimum sirf ₹1,500. Baaki ₹28,500 par high interest lagna shuru. Debt kam hone ke bajaye badhta jaata hai. Hamesha full outstanding pay karein. Minimum payment is a trap, not a solution! Finplaza ko follow karein!", "type": "string" }
+            { "id": "1", "name": "script", "value": "Credit card ka minimum payment trap! Kya aap bhi har mahine sirf minimum amount pay karte ho? Maan lo bill hai ₹30,000 aur minimum sirf ₹1,500. Baaki ₹28,500 par high interest lagna shuru. Debt kam hone ke bajaye badhta jaata hai. Hamesha full outstanding pay karein. Minimum payment is a trap, not a solution! Finplaza ko follow karein!", "type": "string" },
+            { "id": "2", "name": "voice", "value": "Puck", "type": "string" }
           ]
         },
         "options": {}
@@ -33,7 +34,7 @@
         "headerParameters": { "parameters": [ { "name": "content-type", "value": "application/json" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ contents: [ { parts: [ { text: 'Say in an energetic, friendly Indian voice: ' + $json.script } ] } ], generationConfig: { responseModalities: [\"AUDIO\"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: \"Kore\" } } } } }) }}",
+        "jsonBody": "={{ JSON.stringify({ contents: [ { parts: [ { text: 'Say in an energetic, friendly Indian voice: ' + $json.script } ] } ], generationConfig: { responseModalities: [\"AUDIO\"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: $json.voice } } } } }) }}",
         "options": { "timeout": 120000 }
       },
       "id": "b2000000-0000-0000-0000-000000000003",
